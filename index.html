@@ -282,7 +282,7 @@
   function hideProgress() { $("progress").hidden = true; }
 
   /* Gallery list cache (per tab) so repeating a lookup is instant */
-  function cacheKey(name) { return "gallery:" + name.trim().toLowerCase(); }
+  function cacheKey(name) { return "gallery240c:" + name.trim().toLowerCase(); }
   function readCache(name) {
     try {
       var raw = sessionStorage.getItem(cacheKey(name));

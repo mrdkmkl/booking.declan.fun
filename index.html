@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f8f8">
 <title>Photography</title>
 <style>
   :root {
@@ -27,11 +28,13 @@
     -webkit-font-smoothing: antialiased;
   }
   button, input { font: inherit; color: inherit; }
+  html { -webkit-text-size-adjust: 100%; }
+  button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
   [hidden] { display: none !important; }
 
   /* Home: three full-width bands */
-  #home { min-height: 100vh; display: flex; flex-direction: column; }
+  #home { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
   .option {
     flex: 1;
     display: flex;
@@ -60,12 +63,16 @@
     font-size: 0.95rem;
     transition: color .2s ease;
   }
-  .option:hover, .option:focus-visible { background: var(--ink); color: var(--paper); }
-  .option:hover .desc, .option:focus-visible .desc { color: #b9bfc3; }
+  .option:focus-visible { background: var(--ink); color: var(--paper); }
+  .option:focus-visible .desc { color: #b9bfc3; }
+  @media (hover: hover) {
+    .option:hover { background: var(--ink); color: var(--paper); }
+    .option:hover .desc { color: #b9bfc3; }
+  }
   .option:focus-visible { outline-offset: -4px; outline-color: var(--paper); }
 
   /* Inner pages */
-  .page { min-height: 100vh; padding: 1.5rem clamp(1.25rem, 5vw, 4rem) 4rem; }
+  .page { min-height: 100vh; min-height: 100dvh; padding: 1.5rem clamp(1.25rem, 5vw, 4rem) 4rem; }
   .back, .link {
     background: none; border: 0; padding: .25rem 0; cursor: pointer;
     color: var(--muted); font-size: .95rem;
@@ -121,7 +128,7 @@
   .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin: 1rem 0; }
   .results-head h2 { margin: 0; font-size: 1.25rem; font-weight: 400; }
   .results-head span { color: var(--muted); font-size: .95rem; }
-  [data-el="datesbox"], [data-el="photosbox"] { margin-top: 2rem; }
+  [data-el="datesbox"], [data-el="photosbox"] { margin-top: 2rem; scroll-margin-top: .5rem; }
   .selectable [data-el="photosbox"] { padding-bottom: 5rem; }
 
   /* Date picker */
@@ -185,7 +192,7 @@
   .cobar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-    padding: .85rem clamp(1.25rem, 5vw, 4rem);
+    padding: .85rem clamp(1.25rem, 5vw, 4rem); padding-bottom: calc(.85rem + env(safe-area-inset-bottom, 0px));
     background: var(--paper); border-top: 1px solid var(--line);
   }
 
@@ -203,7 +210,8 @@
   #lbstage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 1.25rem; }
   #lbstage { position: relative; }
   #lbimg { width: 100%; height: 100%; object-fit: contain; }   /* enlarge to fill the screen (previews are small) */
-  .lb-nav { display: flex; justify-content: center; gap: .75rem; padding: 1rem; }
+  .lb-nav { display: flex; justify-content: center; gap: .75rem; padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+  #lbstage, .co-frame { touch-action: pan-y pinch-zoom; }
 
   /* Checkout */
   #checkout {
@@ -243,7 +251,7 @@
   .btn:hover { background: #000; }
   .btn.ghost { background: transparent; color: var(--ink); border-color: #aeb4b8; }
   .btn.ghost:hover { background: #fff; }
-  .co-note { margin: .6rem 0 0; text-align: center; color: var(--muted); font-size: .85rem; }
+  .co-note { margin: .6rem 0 0; padding: 0 .25rem; text-align: center; color: var(--muted); font-size: .85rem; }
 
   .co-pay {
     overflow: hidden auto; border-left: 1px solid var(--line); background: var(--paper);
@@ -272,7 +280,8 @@
 
   @media (max-width: 860px) {
     .co-grid, .co-grid.paid { display: block; transition: none; }
-    .co-stage { height: 72vh; }
+    .co-stage { height: 60vh; height: 60dvh; }
+    .co-grid.paid .co-stage { height: auto; min-height: calc(100vh - 3.5rem); min-height: calc(100dvh - 3.5rem); }
     .co-pay { border-left: 0; border-top: 1px solid var(--line); }
     .co-pay .inner { width: auto; }
     .co-grid.paid .co-pay { display: none; }
@@ -283,6 +292,28 @@
     form.coupon .submit { width: auto; }
     .cobar .submit { width: auto; }
   }
+  @media (max-width: 640px) {
+    .page { padding-top: 1rem; }
+    h1 { margin-top: 2rem; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+    .dates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .tools .hint { flex-basis: 100%; }
+    .co-dl .btn { flex: 1 1 100%; text-align: center; }
+    .co-top { padding-top: calc(.9rem + env(safe-area-inset-top, 0px)); }
+    .co-pay .inner { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
+    .co-stage { padding-left: 1rem; padding-right: 1rem; }
+    .cosum-text { font-size: .9rem; }
+  }
+  @media (pointer: coarse) {
+    .back, .link { padding: .75rem .25rem; }
+    .co-nav button, .lb-bar button, .lb-nav button { padding: .8rem 1.3rem; }
+    .selectable .expand { padding: .55rem .95rem; font-size: .85rem; }
+    .selectable .check { width: 28px; height: 28px; }
+    .selectable .tile.selected .check::after { left: 9px; top: 4px; }
+    .btn { padding: .85rem 1.3rem; }
+    .submit { min-height: 44px; }
+  }
+  #shmsg { margin-top: .4rem; }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
     .progress.indeterminate .barfill { animation: none; left: 0; width: 100%; opacity: .4; }
@@ -361,7 +392,7 @@
   </div>
 
   <div class="cobar" data-el="cobar" hidden>
-    <span data-el="cosum"></span>
+    <span class="cosum-text" data-el="cosum"></span>
     <button type="button" class="submit" data-el="cobtn" disabled>Checkout</button>
   </div>
 </template>
@@ -392,10 +423,13 @@
         <button type="button" id="conextbtn">Next</button>
       </div>
       <div class="co-dl" id="codl" hidden>
-        <a class="btn" id="codown" href="#" rel="noopener">Download this photo</a>
+        <button type="button" class="btn" id="coshare" hidden>Save to Photos</button>
+        <button type="button" class="btn" id="coshareall" hidden>Save all to Photos</button>
+        <a class="btn ghost" id="codown" href="#" rel="noopener">Download this photo</a>
         <a class="btn ghost" id="cozip" href="#" rel="noopener">Download all (.zip)</a>
         <button type="button" class="btn ghost" id="cocopy">Copy link</button>
       </div>
+      <p class="co-note" id="shmsg" role="status" aria-live="polite" hidden></p>
       <p class="co-note" id="comsg" hidden></p>
     </section>
 
@@ -594,6 +628,9 @@
       E("datesbox").hidden = (which !== "dates");
       E("photosbox").hidden = (which !== "photos");
       E("cobar").hidden = !(selectable && which === "photos");
+      // on phones the name form fills the screen: bring the dates / photos into view
+      var box = which === "dates" ? E("datesbox") : which === "photos" ? E("photosbox") : null;
+      if (box && window.innerWidth <= 860) box.scrollIntoView({ block: "start" });
     }
 
     /* Step 1: type a name, get the list of dates */
@@ -872,7 +909,7 @@
         try {
           Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf("dates2:") === 0 || k.indexOf("photos2:") === 0) sessionStorage.removeItem(k); });
         } catch (err) { /* ignore */ }
-        if (S.name) E("lookup").requestSubmit();
+        if (S.name) E("lookup").querySelector("button").click();
       },
       focus: function () { if (E("lookup").offsetParent !== null || true) nameInput.focus({ preventScroll: true }); },
       say: setStatus
@@ -977,6 +1014,7 @@
     var it = CO.items[CO.index];
     var prev = $("coprev"), full = $("cofull");
     var tok = ++CO.fullToken;
+    resetShare("one");
 
     var animate = CO.paid && CO.fadePending;          // the fade-in happens once: on the first photo after paying
     if (CO.paid) CO.fadePending = false;
@@ -1104,7 +1142,7 @@
     $("cotitle").textContent = "Your photos";
     $("coback").textContent = "Done";
     $("cozip").href = API_BASE + order.zip;
-    $("codl").hidden = false;
+    $("codl").hidden = false; paidUI();
     setNote("paymsg", "");
     showCopyNote("Keep this page's link to come back to your photos. Anyone with the link can download them.");
 
@@ -1128,6 +1166,139 @@
     else fail();
   });
 
+  /* ------------------------------------------------------------------
+     Save to Photos: hand the original files to the phone's share sheet
+     (on iPhone/iPad choose "Save Image" to put them in Apple Photos).
+  ------------------------------------------------------------------ */
+  var SHARE_BATCH = 10;                    // files per share sheet, keeps phone memory in check
+  var SHARE_IDLE = { one: "Save to Photos", all: "Save all to Photos" };
+  var shareJobs = {};
+  var shareBusy = false;
+  var SHARE_OK = (function () {
+    try {
+      if (!(navigator.share && navigator.canShare)) return false;
+      return navigator.canShare({ files: [new File([new Blob(["x"])], "a.jpg", { type: "image/jpeg" })] });
+    } catch (err) { return false; }
+  })();
+
+  function shareBtn(kind) { return $(kind === "one" ? "coshare" : "coshareall"); }
+  function shareMsg(msg, isError) {
+    var el = $("shmsg");
+    el.textContent = msg || "";
+    el.hidden = !msg;
+    el.style.color = isError ? "var(--error)" : "";
+  }
+  function nextLabel(job) {
+    return "Save next " + Math.min(SHARE_BATCH, job.indexes.length - job.pos) + " (" + job.pos + " of " + job.indexes.length + " saved)";
+  }
+  function resetShare(kind) {
+    if (shareBusy) return;
+    delete shareJobs[kind];
+    shareBtn(kind).textContent = SHARE_IDLE[kind];
+    shareBtn(kind).disabled = false;
+  }
+  function paidUI() {
+    shareJobs = {};
+    shareMsg("");
+    resetShare("one");
+    resetShare("all");
+    $("coshare").hidden = !SHARE_OK;
+    $("coshareall").hidden = !SHARE_OK || CO.items.length < 2;
+  }
+
+  function fetchOriginal(item) {
+    return fetch(item.download).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.blob();
+    }).then(function (b) {
+      var name = item.name || "photo.jpg";
+      return new File([b], name, { type: /\.png$/i.test(name) ? "image/png" : "image/jpeg" });
+    });
+  }
+
+  function runShare(kind) {
+    if (shareBusy || !CO.paid) return;
+    var btn = shareBtn(kind);
+    var job = shareJobs[kind];
+    if (job && kind === "one" && job.indexes[0] !== CO.index) job = null;     // moved to another photo
+    if (!job) {
+      var idx = kind === "one" ? [CO.index] : CO.items.map(function (_, i) { return i; });
+      job = shareJobs[kind] = { indexes: idx, pos: 0, prepared: null };
+    }
+    var slice = job.indexes.slice(job.pos, job.pos + SHARE_BATCH);
+    shareBusy = true;
+    btn.disabled = true;
+    shareMsg("");
+
+    function share(files) {
+      // This must run straight from a tap when files are already prepared, or the phone refuses it
+      return navigator.share({ files: files }).then(function () {
+        job.prepared = null;
+        job.pos += slice.length;
+        if (job.pos < job.indexes.length) {
+          btn.textContent = nextLabel(job);
+          shareMsg("On iPhone choose Save Image in the share sheet. Tap again for the next batch.");
+        } else {
+          delete shareJobs[kind];
+          btn.textContent = SHARE_IDLE[kind];
+          shareMsg("On iPhone choose Save Image in the share sheet to put photos in Photos.");
+        }
+      }, function (err) {
+        if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) job.prepared = files;
+        throw err;
+      });
+    }
+
+    var chain;
+    if (job.prepared) {
+      chain = share(job.prepared);
+    } else {
+      var files = [];
+      chain = slice.reduce(function (p, i, k) {
+        return p.then(function () {
+          btn.textContent = "Preparing " + (k + 1) + " of " + slice.length + "...";
+          return fetchOriginal(CO.items[i]).then(function (f) { files.push(f); });
+        });
+      }, Promise.resolve()).then(function () { return share(files); });
+    }
+
+    chain.catch(function (err) {
+      var name = err && err.name;
+      if (name === "AbortError") {                         // closed the share sheet
+        btn.textContent = job.pos ? nextLabel(job) : SHARE_IDLE[kind];
+      } else if (name === "NotAllowedError") {              // photos took long to fetch: needs one more tap
+        btn.textContent = "Ready: tap to share";
+        shareMsg("Your photos are ready. Tap once more to open the share sheet.");
+      } else {
+        delete shareJobs[kind];
+        btn.textContent = SHARE_IDLE[kind];
+        shareMsg("Couldn't open the share sheet. Use the download buttons instead.", true);
+      }
+    }).finally(function () {
+      shareBusy = false;
+      btn.disabled = false;
+    });
+  }
+  $("coshare").addEventListener("click", function () { runShare("one"); });
+  $("coshareall").addEventListener("click", function () { runShare("all"); });
+
+  /* Swipe left/right to change photo (checkout and viewer) */
+  function onSwipe(el, goNext, goPrev) {
+    var x0 = null, y0 = 0;
+    el.addEventListener("touchstart", function (e) {
+      if (e.touches.length !== 1) { x0 = null; return; }
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+    }, { passive: true });
+    el.addEventListener("touchend", function (e) {
+      if (x0 === null) return;
+      var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { if (dx < 0) goNext(); else goPrev(); }
+    }, { passive: true });
+  }
+  onSwipe(document.querySelector(".co-frame"), function () { showCoPhoto(CO.index + 1); }, function () { showCoPhoto(CO.index - 1); });
+  onSwipe($("lbstage"), function () { show(current + 1, 1); }, function () { show(current - 1, -1); });
+
   /* Opening a paid order straight from its link (#order=...) */
   function openOrder(token) {
     api("/api/order?token=" + encodeURIComponent(token))
@@ -1149,7 +1320,7 @@
         $("cotitle").textContent = "Your photos";
         $("coback").textContent = "Done";
         $("cozip").href = API_BASE + order.zip;
-        $("codl").hidden = false;
+        $("codl").hidden = false; paidUI();
         showCopyNote("Keep this page's link to come back to your photos. Anyone with the link can download them.");
         $("cogrid").classList.add("paid");
         $("copay").hidden = true;

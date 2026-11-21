@@ -12,6 +12,7 @@
     --line: #d5d9db;
     --focus: #2a5d73;
     --error: #a3301f;
+    --good: #1f6b4a;
     --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -65,12 +66,12 @@
 
   /* Inner pages */
   .page { min-height: 100vh; padding: 1.5rem clamp(1.25rem, 5vw, 4rem) 4rem; }
-  .back {
+  .back, .link {
     background: none; border: 0; padding: .25rem 0; cursor: pointer;
     color: var(--muted); font-size: .95rem;
     text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line);
   }
-  .back:hover { color: var(--ink); }
+  .back:hover, .link:hover { color: var(--ink); }
   h1 {
     margin: 3rem 0 .5rem;
     font-size: clamp(2rem, 4.5vw, 3.25rem);
@@ -88,47 +89,104 @@
     border: 1px solid #aeb4b8; border-radius: 2px;
   }
   input[type="text"]:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
+  input[type="text"]:disabled { background: #eceeef; color: var(--muted); }
   .submit {
     padding: .8rem 1.5rem; background: var(--ink); color: var(--paper);
     border: 1px solid var(--ink); border-radius: 2px; cursor: pointer;
   }
   .submit:hover { background: #000; }
-  .submit:disabled { opacity: .55; cursor: wait; }
-  #status { min-height: 1.5rem; margin: 1rem 0 0; font-size: .95rem; color: var(--muted); }
-  #status.error { color: var(--error); }
+  .submit:disabled { opacity: .55; cursor: not-allowed; }
+  .submit.busy:disabled { cursor: wait; }
+  .status { min-height: 1.5rem; margin: 1rem 0 0; font-size: .95rem; color: var(--muted); }
+  .status.error { color: var(--error); }
 
   /* Progress bar */
-  #progress { max-width: 34rem; margin: .75rem 0 0; }
+  .progress { max-width: 34rem; margin: .75rem 0 0; }
   .bar {
     position: relative; height: 6px; background: var(--line);
     border-radius: 3px; overflow: hidden;
   }
-  #barfill {
+  .barfill {
     height: 100%; width: 0; background: var(--ink);
     transition: width .2s ease;
   }
-  #progress.indeterminate #barfill {
+  .progress.indeterminate .barfill {
     position: absolute; width: 35%;
     animation: slide 1.1s ease-in-out infinite;
   }
   @keyframes slide { from { left: -35%; } to { left: 100%; } }
-  #ptext { display: block; margin-top: .4rem; font-size: .85rem; color: var(--muted); }
+  .ptext { display: block; margin-top: .4rem; font-size: .85rem; color: var(--muted); }
 
-  /* Gallery */
-  #results { margin-top: 2.5rem; }
-  .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; }
+  /* Results header */
+  .results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin: 1rem 0; }
   .results-head h2 { margin: 0; font-size: 1.25rem; font-weight: 400; }
   .results-head span { color: var(--muted); font-size: .95rem; }
+  [data-el="datesbox"], [data-el="photosbox"] { margin-top: 2rem; }
+  .selectable [data-el="photosbox"] { padding-bottom: 5rem; }
+
+  /* Date picker */
+  .dates { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+  .date-card {
+    display: flex; flex-direction: column; text-align: left; padding: 0; background: #fff;
+    border: 1px solid var(--line); cursor: pointer; overflow: hidden;
+    transition: border-color .15s ease;
+  }
+  .date-card:hover, .date-card:focus-visible { border-color: var(--ink); }
+  .date-card .cover { display: block; aspect-ratio: 3 / 2; background: #e3e6e8; overflow: hidden; }
+  .date-card .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .date-card .meta { display: block; padding: .8rem .95rem 1rem; }
+  .date-card .d { display: block; font-size: 1rem; line-height: 1.3; }
+  .date-card .n { display: block; margin-top: .2rem; font-size: .85rem; color: var(--muted); }
+
+  /* Photo grid */
+  .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; margin-bottom: .9rem; }
+  .tools .hint { color: var(--muted); font-size: .85rem; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 6px; }
-  .thumb { padding: 0; border: 0; background: #e3e6e8; cursor: zoom-in; aspect-ratio: 3 / 2; overflow: hidden; }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .thumb:hover img { opacity: .9; }
-  .thumb.pending { cursor: progress; }
-  .thumb.failed { cursor: default; position: relative; }
-  .thumb.failed::after {
-    content: "Failed to load"; position: absolute; inset: 0;
+  .tile { position: relative; aspect-ratio: 3 / 2; background: #e3e6e8; overflow: hidden; }
+  .tile .thumb {
+    position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0;
+    background: transparent; cursor: zoom-in; overflow: hidden;
+  }
+  .tile .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tile .thumb:hover img { opacity: .9; }
+  .tile.pending .thumb { cursor: progress; }
+  .tile.failed .thumb { cursor: default; }
+  .tile.failed::after {
+    content: "Failed to load"; position: absolute; inset: 0; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
     color: var(--error); font-size: .85rem;
+  }
+  /* Selecting (pay page only) */
+  .check, .expand { display: none; }
+  .selectable .tile .thumb { cursor: pointer; }
+  .selectable .tile.pending .thumb { cursor: progress; }
+  .selectable .tile.failed .thumb { cursor: default; }
+  .selectable .check {
+    display: block; position: absolute; z-index: 1; top: 8px; left: 8px; width: 24px; height: 24px;
+    border-radius: 50%; border: 2px solid #fff; background: rgba(17, 19, 21, .35);
+    box-shadow: 0 0 0 1px rgba(17, 19, 21, .35);
+  }
+  .selectable .tile.selected { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .selectable .tile.selected .check { background: var(--ink); border-color: #fff; }
+  .selectable .tile.selected .check::after {
+    content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .selectable .tile.failed .check { display: none; }
+  .selectable .expand {
+    display: block; position: absolute; z-index: 1; right: 8px; bottom: 8px;
+    padding: .25rem .7rem; background: rgba(17, 19, 21, .78); color: #fff;
+    border: 0; border-radius: 2px; cursor: zoom-in; font-size: .8rem;
+  }
+  .selectable .expand:hover { background: #000; }
+  .selectable .expand:disabled { display: none; }
+
+  /* Selection bar */
+  .cobar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: .85rem clamp(1.25rem, 5vw, 4rem);
+    background: var(--paper); border-top: 1px solid var(--line);
   }
 
   /* Lightbox */
@@ -147,13 +205,87 @@
   #lbimg { width: 100%; height: 100%; object-fit: contain; }   /* enlarge to fill the screen (previews are small) */
   .lb-nav { display: flex; justify-content: center; gap: .75rem; padding: 1rem; }
 
+  /* Checkout */
+  #checkout {
+    position: fixed; inset: 0; z-index: 20; background: var(--paper);
+    display: flex; flex-direction: column; overflow: auto;
+  }
+  .co-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .9rem clamp(1.25rem, 4vw, 3rem); border-bottom: 1px solid var(--line);
+  }
+  .co-top h2 { margin: 0; font-size: 1.1rem; font-weight: 400; }
+  .co-grid {
+    flex: 1; min-height: 0; display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    transition: grid-template-columns .75s ease;
+  }
+  .co-grid.paid { grid-template-columns: minmax(0, 1fr) 0px; }
+  .co-stage {
+    display: flex; flex-direction: column; min-width: 0; min-height: 0;
+    padding: 1.25rem clamp(1.25rem, 4vw, 3rem); background: #eceeef;
+  }
+  .co-frame { position: relative; flex: 1; min-height: 320px; }
+  .co-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .co-full { opacity: 0; transition: opacity 1.2s ease; }      /* the original-quality image, fading in over the preview */
+  .co-full.on { opacity: 1; }
+  .co-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; padding-top: 1rem; }
+  .co-nav button {
+    background: none; border: 1px solid #aeb4b8; padding: .5rem 1.1rem; border-radius: 2px; cursor: pointer;
+  }
+  .co-nav button:hover { background: #fff; }
+  .co-nav span { min-width: 9rem; text-align: center; color: var(--muted); font-size: .95rem; }
+  .co-dl { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; padding-top: .9rem; }
+  .btn {
+    display: inline-block; padding: .65rem 1.3rem; background: var(--ink); color: var(--paper);
+    border: 1px solid var(--ink); border-radius: 2px; cursor: pointer; text-decoration: none; font-size: .95rem;
+  }
+  .btn:hover { background: #000; }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: #aeb4b8; }
+  .btn.ghost:hover { background: #fff; }
+  .co-note { margin: .6rem 0 0; text-align: center; color: var(--muted); font-size: .85rem; }
+
+  .co-pay {
+    overflow: hidden auto; border-left: 1px solid var(--line); background: var(--paper);
+    transition: opacity .5s ease, transform .75s ease;
+  }
+  .co-pay .inner { width: 400px; padding: 1.5rem; }       /* fixed width so nothing re-wraps while the panel slides away */
+  .co-grid.paid .co-pay { opacity: 0; transform: translateX(36px); pointer-events: none; }
+  .co-pay h2 { margin: 0 0 1rem; font-size: 1.25rem; font-weight: 400; }
+  .row {
+    display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0;
+    border-bottom: 1px solid var(--line); font-size: .95rem;
+  }
+  .row.disc { color: var(--good); }
+  .row.total { border-bottom: 0; padding-top: .9rem; font-size: 1.2rem; font-weight: 500; }
+  form.coupon { max-width: none; flex-wrap: nowrap; gap: .5rem; margin-top: 1.25rem; }
+  form.coupon .field { flex: 1 1 auto; }
+  form.coupon .submit { padding: .75rem 1.1rem; }
+  .note { margin: .5rem 0 0; font-size: .85rem; color: var(--muted); min-height: 1.25rem; }
+  .note.error { color: var(--error); }
+  .note.good { color: var(--good); }
+  .slot {
+    margin-top: 1.25rem; padding: 1rem; border: 1px dashed #aeb4b8; border-radius: 2px;
+    color: var(--muted); font-size: .9rem;
+  }
+  .paybtn { width: 100%; margin-top: 1rem; font-size: 1.05rem; }
+
+  @media (max-width: 860px) {
+    .co-grid, .co-grid.paid { display: block; transition: none; }
+    .co-stage { height: 72vh; }
+    .co-pay { border-left: 0; border-top: 1px solid var(--line); }
+    .co-pay .inner { width: auto; }
+    .co-grid.paid .co-pay { display: none; }
+  }
   @media (max-width: 640px) {
     .option { flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: .75rem; padding-top: 2rem; padding-bottom: 2rem; }
     .submit { width: 100%; }
+    form.coupon .submit { width: auto; }
+    .cobar .submit { width: auto; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
-    #progress.indeterminate #barfill { animation: none; left: 0; width: 100%; opacity: .4; }
+    .progress.indeterminate .barfill { animation: none; left: 0; width: 100%; opacity: .4; }
   }
 </style>
 </head>
@@ -183,35 +315,56 @@
 <section id="receive" class="page" hidden>
   <button class="back" data-go="home">Back</button>
   <h1>Receive photos &amp; pay</h1>
-  <p class="lede">Payment and downloads are not available yet.</p>
+  <p class="lede">Enter your name exactly as it was given when you booked, pick a date, then choose the photos you want. Photos stay as watermarked previews until you've paid.</p>
+  <div data-flow></div>
 </section>
 
 <section id="photos" class="page" hidden>
   <button class="back" data-go="home">Back</button>
   <h1>See photos</h1>
-  <p class="lede">Enter your name exactly as it was given when you booked. Previews are reduced in size and quality.</p>
-
-  <form id="lookup" autocomplete="off">
-    <div class="field">
-      <label for="name">Name</label>
-      <input id="name" type="text" required maxlength="100">
-    </div>
-    <button class="submit" type="submit">View photos</button>
-  </form>
-  <p id="status" role="status" aria-live="polite"></p>
-
-  <div id="progress" hidden>
-    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading photos">
-      <div id="barfill"></div>
-    </div>
-    <span id="ptext"></span>
-  </div>
-
-  <div id="results" hidden>
-    <div class="results-head"><h2 id="who"></h2><span id="count"></span></div>
-    <div class="grid" id="grid"></div>
-  </div>
+  <p class="lede">Enter your name exactly as it was given when you booked, then pick a date. Previews are reduced in size and quality.</p>
+  <div data-flow></div>
 </section>
+
+<!-- One copy of this is placed on each of the two pages above -->
+<template id="flow-tpl">
+  <form data-el="lookup" autocomplete="off">
+    <div class="field">
+      <label data-el="label">Name</label>
+      <input data-el="name" type="text" required maxlength="100">
+    </div>
+    <button class="submit" type="submit">View dates</button>
+  </form>
+  <p class="status" data-el="status" role="status" aria-live="polite"></p>
+
+  <div class="progress" data-el="progress" hidden>
+    <div class="bar" data-el="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading photos">
+      <div class="barfill" data-el="fill"></div>
+    </div>
+    <span class="ptext" data-el="ptext"></span>
+  </div>
+
+  <div data-el="datesbox" hidden>
+    <div class="results-head"><h2 data-el="who"></h2><span data-el="dcount"></span></div>
+    <div class="dates" data-el="dates"></div>
+  </div>
+
+  <div data-el="photosbox" hidden>
+    <button type="button" class="back" data-el="alldates">All dates</button>
+    <div class="results-head"><h2 data-el="title"></h2><span data-el="count"></span></div>
+    <div class="tools" data-el="tools" hidden>
+      <button type="button" class="link" data-el="selall">Select all</button>
+      <button type="button" class="link" data-el="selnone">Clear</button>
+      <span class="hint">Tap a photo to select it. Use View to enlarge it.</span>
+    </div>
+    <div class="grid" data-el="grid"></div>
+  </div>
+
+  <div class="cobar" data-el="cobar" hidden>
+    <span data-el="cosum"></span>
+    <button type="button" class="submit" data-el="cobtn" disabled>Checkout</button>
+  </div>
+</template>
 
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
   <div class="lb-bar"><span id="lbcount"></span><button id="lbclose" type="button">Close</button></div>
@@ -219,6 +372,58 @@
   <div class="lb-nav">
     <button id="lbprev" type="button">Previous</button>
     <button id="lbnext" type="button">Next</button>
+  </div>
+</div>
+
+<div id="checkout" role="dialog" aria-modal="true" aria-label="Checkout" hidden>
+  <div class="co-top">
+    <button type="button" class="back" id="coback">Back to photos</button>
+    <h2 id="cotitle">Checkout</h2>
+  </div>
+  <div class="co-grid" id="cogrid">
+    <section class="co-stage" aria-label="Your photos">
+      <div class="co-frame">
+        <img class="co-img" id="coprev" alt="Preview">
+        <img class="co-img co-full" id="cofull" alt="Full photo">
+      </div>
+      <div class="co-nav">
+        <button type="button" id="coprevbtn">Previous</button>
+        <span id="cocount" aria-live="polite"></span>
+        <button type="button" id="conextbtn">Next</button>
+      </div>
+      <div class="co-dl" id="codl" hidden>
+        <a class="btn" id="codown" href="#" rel="noopener">Download this photo</a>
+        <a class="btn ghost" id="cozip" href="#" rel="noopener">Download all (.zip)</a>
+        <button type="button" class="btn ghost" id="cocopy">Copy link</button>
+      </div>
+      <p class="co-note" id="comsg" hidden></p>
+    </section>
+
+    <aside class="co-pay" id="copay" aria-label="Payment">
+      <div class="inner">
+        <h2>Payment</h2>
+        <div class="row"><span id="sumlabel"></span><span id="sumgross"></span></div>
+        <div class="row disc" id="rowdisc" hidden><span>Coupon</span><span id="sumdisc"></span></div>
+        <div class="row"><span id="feelabel"></span><span id="sumfee"></span></div>
+        <div class="row total"><span>Total</span><span id="sumtotal"></span></div>
+
+        <form class="coupon" id="couponform" autocomplete="off">
+          <div class="field">
+            <label for="coupon">Coupon code</label>
+            <input id="coupon" type="text" maxlength="64" autocapitalize="characters" spellcheck="false">
+          </div>
+          <button class="submit" type="submit" id="couponbtn">Apply</button>
+          <button class="submit" type="button" id="couponrm" hidden>Remove</button>
+        </form>
+        <p class="note" id="couponmsg" role="status" aria-live="polite"></p>
+
+        <!-- PAYMENT HOOK (page side): the card form from a payment provider goes in this box -->
+        <div class="slot" id="payslot"></div>
+
+        <button class="submit paybtn" type="button" id="paybtn"></button>
+        <p class="note" id="paymsg" role="status" aria-live="polite"></p>
+      </div>
+    </aside>
   </div>
 </div>
 
@@ -230,18 +435,52 @@
   var GALLERY_TTL_MS = 5 * 60 * 1000;   // reuse a looked-up gallery list for 5 minutes
   var IMAGE_TIMEOUT_MS = 60000;         // give up on a single photo after this long
   var IMAGE_TRIES = 2;                  // each photo is tried this many times
+  var FADE_DELAY_MS = 650;              // after paying: wait for the panel to slide away, then fade the full image in
 
   var views = ["home", "booking", "photos", "receive"];
   var $ = function (id) { return document.getElementById(id); };
 
+  function fmt(cents) { return "$" + (cents / 100).toFixed(2); }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+
+  function api(path, options) {
+    return fetch(API_BASE + path, options).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        return { ok: r.ok, status: r.status, data: data };
+      });
+    });
+  }
+  function postJSON(path, body) {
+    return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  }
+
+  /* Short-lived cache (per tab) so repeating a lookup is instant */
+  function readCache(key) {
+    try {
+      var raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (Date.now() - obj.t > GALLERY_TTL_MS) return null;
+      return obj.data;
+    } catch (err) { return null; }
+  }
+  function writeCache(key, data) {
+    try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), data: data })); }
+    catch (err) { /* storage full or blocked: just skip caching */ }
+  }
+
   /* Navigation (uses the URL hash so the browser Back button works) */
+  var flows = {};
   function route() {
-    var id = location.hash.slice(1);
+    var raw = location.hash.slice(1), id = raw, orderToken = null;
+    if (raw.indexOf("order=") === 0) { id = "receive"; orderToken = raw.slice(6); }   // a paid order's link
     if (views.indexOf(id) === -1) id = "home";
     views.forEach(function (v) { $(v).hidden = (v !== id); });
     closeLightbox();
+    if (!orderToken) closeCheckout(true);
     window.scrollTo(0, 0);
-    if (id === "photos") $("name").focus({ preventScroll: true });
+    if (flows[id]) flows[id].focus();
+    if (orderToken) openOrder(orderToken);
   }
   document.addEventListener("click", function (e) {
     var el = e.target.closest("[data-go]");
@@ -252,123 +491,41 @@
   });
   window.addEventListener("hashchange", route);
 
-  /* Gallery lookup */
-  var photos = [];
+  /* Lightbox (shows whichever list of photos it is handed) */
+  var lastFocus = null;
+  var lbList = [];
   var current = 0;
-  var loadToken = 0;                    // bumps on every new lookup, cancels the previous loader
-  var status = $("status");
-
-  function setStatus(msg, isError) {
-    status.textContent = msg || "";
-    status.className = isError ? "error" : "";
+  function openLightbox(list, i) {
+    lbList = list;
+    lastFocus = document.activeElement;
+    $("lightbox").hidden = false;
+    document.body.style.overflow = "hidden";
+    show(i, 1);
+    $("lbclose").focus();
   }
-
-  /* Progress bar: indeterminate while looking up, then n of total */
-  function showProgress(text, done, total) {
-    var box = $("progress");
-    var bar = box.querySelector(".bar");
-    box.hidden = false;
-    $("ptext").textContent = text || "";
-    if (total == null) {
-      box.className = "indeterminate";
-      $("barfill").style.width = "";
-      bar.removeAttribute("aria-valuenow");
-    } else {
-      box.className = "";
-      var pct = total ? Math.round((done / total) * 100) : 100;
-      $("barfill").style.width = pct + "%";
-      bar.setAttribute("aria-valuenow", String(pct));
+  function closeLightbox() {
+    if ($("lightbox").hidden) return;
+    $("lightbox").hidden = true;
+    document.body.style.overflow = "";
+    if (lastFocus) lastFocus.focus();
+  }
+  // step is +1 or -1 so Previous/Next skip any photo that failed to load
+  function show(i, step) {
+    var n = lbList.length;
+    if (!n) return;
+    var idx = ((i % n) + n) % n;
+    for (var tries = 0; tries < n && !lbList[idx].ok; tries++) {
+      idx = (((idx + step) % n) + n) % n;
     }
+    current = idx;
+    $("lbimg").src = lbList[current].url;
+    $("lbcount").textContent = (current + 1) + " of " + n;
   }
-  function hideProgress() { $("progress").hidden = true; }
+  $("lbclose").addEventListener("click", closeLightbox);
+  $("lbprev").addEventListener("click", function () { show(current - 1, -1); });
+  $("lbnext").addEventListener("click", function () { show(current + 1, 1); });
 
-  /* Gallery list cache (per tab) so repeating a lookup is instant */
-  function cacheKey(name) { return "gallery180c:" + name.trim().toLowerCase(); }
-  function readCache(name) {
-    try {
-      var raw = sessionStorage.getItem(cacheKey(name));
-      if (!raw) return null;
-      var obj = JSON.parse(raw);
-      if (Date.now() - obj.t > GALLERY_TTL_MS) return null;
-      return obj.data;
-    } catch (err) { return null; }
-  }
-  function writeCache(name, data) {
-    try { sessionStorage.setItem(cacheKey(name), JSON.stringify({ t: Date.now(), data: data })); }
-    catch (err) { /* storage full or blocked: just skip caching */ }
-  }
-
-  $("lookup").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var name = $("name").value.trim();
-    if (!name) return;
-    var btn = e.target.querySelector("button");
-    var token = ++loadToken;
-    btn.disabled = true;
-    $("results").hidden = true;
-    setStatus("");
-
-    var cached = readCache(name);
-    if (cached) {
-      btn.disabled = false;
-      showGallery(cached, token);
-      return;
-    }
-
-    showProgress("Looking for your gallery...", 0, null);
-
-    fetch(API_BASE + "/api/gallery?name=" + encodeURIComponent(name))
-      .then(function (r) {
-        return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; });
-      })
-      .then(function (res) {
-        if (token !== loadToken) return;
-        if (!res.ok) {
-          hideProgress();
-          if (res.status === 429) setStatus("Too many attempts. Wait a minute and try again.", true);
-          else if (res.status === 404) setStatus("No gallery found for that name. Check the spelling and try again.", true);
-          else setStatus("The photo server had a problem. Try again in a moment.", true);
-          return;
-        }
-        writeCache(name, res.data);
-        showGallery(res.data, token);
-      })
-      .catch(function () {
-        if (token !== loadToken) return;
-        hideProgress();
-        setStatus("Could not reach the server. Try again in a moment.", true);
-      })
-      .finally(function () { btn.disabled = false; });
-  });
-
-  function showGallery(data, token) {
-    photos = data.photos.map(function (p) { return { url: API_BASE + p.url, ok: false }; });
-    $("who").textContent = data.folder;
-    $("count").textContent = photos.length + (photos.length === 1 ? " photo" : " photos");
-    var grid = $("grid");
-    grid.textContent = "";
-
-    // Empty slots appear immediately; each one is filled in as its photo arrives.
-    photos.forEach(function (p, i) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "thumb pending";
-      b.setAttribute("aria-label", "Open photo " + (i + 1));
-      b.addEventListener("click", function () { if (photos[i].ok) openLightbox(i); });
-      p.slot = b;
-      grid.appendChild(b);
-    });
-    $("results").hidden = false;
-
-    if (!photos.length) {
-      hideProgress();
-      setStatus("This gallery has no photos yet.");
-      return;
-    }
-    loadSequentially(token);
-  }
-
-  /* Pull photos one at a time, in order, with a progress bar */
+  /* Pull one photo, with a timeout and one retry */
   function loadOne(url, triesLeft, cb) {
     var img = new Image();
     var finished = false;
@@ -391,76 +548,618 @@
     img.src = url;
   }
 
-  function loadSequentially(token) {
-    var total = photos.length, index = 0, done = 0, failed = 0;
-    showProgress("Loading photo 1 of " + total, 0, total);
+  /* ------------------------------------------------------------------
+     The name -> dates -> photos flow. The "See photos" page browses only;
+     the "Receive photos & pay" page lets you select photos and check out.
+  ------------------------------------------------------------------ */
+  function createFlow(section, opts) {
+    var root = section.querySelector("[data-flow]");
+    root.appendChild($("flow-tpl").content.cloneNode(true));
+    function E(n) { return root.querySelector('[data-el="' + n + '"]'); }
 
-    function next() {
-      if (token !== loadToken) return;               // a newer lookup took over
-      if (index >= total) return finish();
-      var i = index++;
-      loadOne(photos[i].url, IMAGE_TRIES, function (ok, img) {
-        if (token !== loadToken) return;
-        var slot = photos[i].slot;
-        slot.classList.remove("pending");
-        if (ok) {
-          photos[i].ok = true;
-          slot.appendChild(img);
-        } else {
-          slot.classList.add("failed");
-          slot.disabled = true;
-          failed++;
+    var selectable = !!opts.selectable;
+    if (selectable) { root.classList.add("selectable"); E("tools").hidden = false; }
+    var nameInput = E("name");
+    nameInput.id = "name-" + opts.key;
+    E("label").htmlFor = nameInput.id;
+
+    // S.token bumps on every lookup / date change, which cancels any photo loading still running
+    var S = { name: "", folder: "", pricing: null, dates: [], date: null, photos: [], selected: {}, token: 0 };
+
+    function setStatus(msg, isError) {
+      var s = E("status");
+      s.textContent = msg || "";
+      s.className = "status" + (isError ? " error" : "");
+    }
+
+    /* Progress bar: indeterminate while looking up, then n of total */
+    function showProgress(text, done, total) {
+      var box = E("progress"), bar = E("bar");
+      box.hidden = false;
+      E("ptext").textContent = text || "";
+      if (total == null) {
+        box.className = "progress indeterminate";
+        E("fill").style.width = "";
+        bar.removeAttribute("aria-valuenow");
+      } else {
+        box.className = "progress";
+        var pct = total ? Math.round((done / total) * 100) : 100;
+        E("fill").style.width = pct + "%";
+        bar.setAttribute("aria-valuenow", String(pct));
+      }
+    }
+    function hideProgress() { E("progress").hidden = true; }
+
+    function showStep(which) {
+      E("datesbox").hidden = (which !== "dates");
+      E("photosbox").hidden = (which !== "photos");
+      E("cobar").hidden = !(selectable && which === "photos");
+    }
+
+    /* Step 1: type a name, get the list of dates */
+    E("lookup").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = nameInput.value.trim();
+      if (!name) return;
+      var btn = e.target.querySelector("button");
+      var token = ++S.token;
+      S.name = name;
+      btn.disabled = true;
+      showStep("none");
+      hideProgress();
+      setStatus("");
+
+      var cacheKey = "dates1:" + name.toLowerCase();
+      var cached = readCache(cacheKey);
+      if (cached) {
+        btn.disabled = false;
+        gotDates(cached);
+        return;
+      }
+
+      showProgress("Looking for your gallery...", 0, null);
+      api("/api/gallery?name=" + encodeURIComponent(name))
+        .then(function (res) {
+          if (token !== S.token) return;
+          hideProgress();
+          if (!res.ok) {
+            if (res.status === 429) setStatus("Too many attempts. Wait a minute and try again.", true);
+            else if (res.status === 404) setStatus("No gallery found for that name. Check the spelling and try again.", true);
+            else setStatus("The photo server had a problem. Try again in a moment.", true);
+            return;
+          }
+          writeCache(cacheKey, res.data);
+          gotDates(res.data);
+        })
+        .catch(function () {
+          if (token !== S.token) return;
+          hideProgress();
+          setStatus("Could not reach the server. Try again in a moment.", true);
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+
+    function gotDates(data) {
+      S.folder = data.folder;
+      S.pricing = data.pricing;
+      S.dates = data.dates || [];
+      E("who").textContent = S.folder;
+      E("dcount").textContent = plural(S.dates.length, "date", "dates");
+      renderDates();
+      if (!S.dates.length) { showStep("none"); setStatus("This gallery has no photos yet."); return; }
+      showStep("dates");
+    }
+
+    /* Step 2: pick a date */
+    function renderDates() {
+      var box = E("dates");
+      box.textContent = "";
+      S.dates.forEach(function (d) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "date-card";
+        var cover = document.createElement("span");
+        cover.className = "cover";
+        if (d.cover) {
+          var im = document.createElement("img");
+          im.loading = "lazy";
+          im.decoding = "async";
+          im.alt = "";
+          im.src = API_BASE + d.cover;
+          cover.appendChild(im);
         }
-        done++;
-        showProgress(done < total ? "Loading photo " + (done + 1) + " of " + total
-                                  : "Loaded " + total + " of " + total, done, total);
-        next();
+        var meta = document.createElement("span");
+        meta.className = "meta";
+        var label = document.createElement("span");
+        label.className = "d";
+        label.textContent = d.label;
+        var n = document.createElement("span");
+        n.className = "n";
+        n.textContent = plural(d.count, "photo", "photos");
+        meta.appendChild(label);
+        meta.appendChild(n);
+        b.appendChild(cover);
+        b.appendChild(meta);
+        b.addEventListener("click", function () { openDate(d); });
+        box.appendChild(b);
       });
     }
 
-    function finish() {
+    E("alldates").addEventListener("click", function () {
+      S.token++;                                     // stop loading this day's photos
       hideProgress();
-      if (failed) setStatus(failed + (failed === 1 ? " photo" : " photos") + " could not be loaded. Search again to retry.", true);
-      else setStatus("");
+      setStatus("");
+      showStep("dates");
+    });
+
+    /* Step 3: the photos of that day */
+    function openDate(d) {
+      var token = ++S.token;
+      S.date = d;
+      S.photos = [];
+      S.selected = {};
+      E("grid").textContent = "";
+      E("title").textContent = d.label;
+      E("count").textContent = plural(d.count, "photo", "photos");
+      setStatus("");
+      showStep("photos");
+      updateBar();
+
+      var cacheKey = "photos1:" + S.name.toLowerCase() + "|" + d.id;
+      var cached = readCache(cacheKey);
+      if (cached) { renderPhotos(cached, token); return; }
+
+      showProgress("Loading photos...", 0, null);
+      api("/api/photos?name=" + encodeURIComponent(S.name) + "&date=" + encodeURIComponent(d.id))
+        .then(function (res) {
+          if (token !== S.token) return;
+          if (!res.ok) {
+            hideProgress();
+            showStep("dates");
+            if (res.status === 429) setStatus("Too many attempts. Wait a minute and try again.", true);
+            else if (res.status === 404) setStatus("That date is no longer available. Search again.", true);
+            else setStatus("The photo server had a problem. Try again in a moment.", true);
+            return;
+          }
+          writeCache(cacheKey, res.data);
+          renderPhotos(res.data, token);
+        })
+        .catch(function () {
+          if (token !== S.token) return;
+          hideProgress();
+          showStep("dates");
+          setStatus("Could not reach the server. Try again in a moment.", true);
+        });
     }
-    next();
+
+    function renderPhotos(data, token) {
+      var photos = S.photos = data.photos.map(function (p) { return { id: p.id, url: API_BASE + p.url, ok: false }; });
+      E("count").textContent = plural(photos.length, "photo", "photos");
+      var grid = E("grid");
+      grid.textContent = "";
+
+      // Empty slots appear immediately; each one is filled in as its photo arrives.
+      photos.forEach(function (p, i) {
+        var tile = document.createElement("div");
+        tile.className = "tile pending";
+        var thumb = document.createElement("button");
+        thumb.type = "button";
+        thumb.className = "thumb";
+        if (selectable) {
+          thumb.setAttribute("aria-pressed", "false");
+          thumb.setAttribute("aria-label", "Select photo " + (i + 1));
+          var chk = document.createElement("span");
+          chk.className = "check";
+          chk.setAttribute("aria-hidden", "true");
+          thumb.appendChild(chk);
+          thumb.addEventListener("click", function () { if (!tile.classList.contains("failed")) toggle(i); });
+          var ex = document.createElement("button");
+          ex.type = "button";
+          ex.className = "expand";
+          ex.textContent = "View";
+          ex.setAttribute("aria-label", "Enlarge photo " + (i + 1));
+          ex.addEventListener("click", function () { if (photos[i].ok) openLightbox(photos, i); });
+          tile.appendChild(thumb);
+          tile.appendChild(ex);
+          p.expand = ex;
+        } else {
+          thumb.setAttribute("aria-label", "Open photo " + (i + 1));
+          thumb.addEventListener("click", function () { if (photos[i].ok) openLightbox(photos, i); });
+          tile.appendChild(thumb);
+        }
+        p.tile = tile;
+        p.thumb = thumb;
+        grid.appendChild(tile);
+      });
+      updateBar();
+
+      if (!photos.length) {
+        hideProgress();
+        setStatus("There are no photos on this date yet.");
+        return;
+      }
+      loadSequentially(token);
+    }
+
+    /* Pull photos one at a time, in order, with a progress bar */
+    function loadSequentially(token) {
+      var photos = S.photos, total = photos.length, index = 0, done = 0, failed = 0;
+      showProgress("Loading photo 1 of " + total, 0, total);
+
+      function next() {
+        if (token !== S.token) return;               // a newer lookup took over
+        if (index >= total) return finish();
+        var i = index++;
+        loadOne(photos[i].url, IMAGE_TRIES, function (ok, img) {
+          if (token !== S.token) return;
+          var p = photos[i];
+          p.tile.classList.remove("pending");
+          if (ok) {
+            p.ok = true;
+            p.thumb.insertBefore(img, p.thumb.firstChild);
+          } else {
+            p.tile.classList.add("failed");
+            p.thumb.disabled = true;
+            if (p.expand) p.expand.disabled = true;
+            if (S.selected[i]) { delete S.selected[i]; paintSel(i); updateBar(); }
+            failed++;
+          }
+          done++;
+          showProgress(done < total ? "Loading photo " + (done + 1) + " of " + total
+                                    : "Loaded " + total + " of " + total, done, total);
+          next();
+        });
+      }
+
+      function finish() {
+        hideProgress();
+        if (failed) setStatus(plural(failed, "photo", "photos") + " could not be loaded. Open the date again to retry.", true);
+        else setStatus("");
+      }
+      next();
+    }
+
+    /* Selecting photos (pay page) */
+    function selectedIndexes() {
+      var out = [];
+      S.photos.forEach(function (p, i) { if (S.selected[i]) out.push(i); });
+      return out;
+    }
+    function paintSel(i) {
+      var p = S.photos[i];
+      if (!p) return;
+      var on = !!S.selected[i];
+      p.tile.classList.toggle("selected", on);
+      if (selectable) p.thumb.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    function toggle(i) {
+      if (S.selected[i]) delete S.selected[i]; else S.selected[i] = true;
+      paintSel(i);
+      updateBar();
+    }
+    function updateBar() {
+      if (!selectable) return;
+      var n = selectedIndexes().length;
+      var unit = S.pricing ? S.pricing.unit_cents : 0;
+      E("cosum").textContent = n ? plural(n, "photo", "photos") + " selected · " + fmt(n * unit) + " before fees"
+                                : "No photos selected";
+      E("cobtn").disabled = (n === 0);
+    }
+    E("selall").addEventListener("click", function () {
+      S.photos.forEach(function (p, i) { if (!p.tile.classList.contains("failed")) S.selected[i] = true; paintSel(i); });
+      updateBar();
+    });
+    E("selnone").addEventListener("click", function () {
+      S.selected = {};
+      S.photos.forEach(function (p, i) { paintSel(i); });
+      updateBar();
+    });
+    E("cobtn").addEventListener("click", function () {
+      var idx = selectedIndexes();
+      if (!idx.length || !opts.onCheckout) return;
+      opts.onCheckout({
+        name: S.name,
+        folder: S.folder,
+        date: S.date,
+        pricing: S.pricing,
+        photos: idx.map(function (i) { return { id: S.photos[i].id, preview: S.photos[i].url }; })
+      });
+    });
+
+    return {
+      focus: function () { if (E("lookup").offsetParent !== null || true) nameInput.focus({ preventScroll: true }); },
+      say: setStatus
+    };
   }
 
-  /* Lightbox */
-  var lastFocus = null;
-  function openLightbox(i) {
-    lastFocus = document.activeElement;
-    $("lightbox").hidden = false;
+  flows.photos = createFlow($("photos"), { key: "photos", selectable: false });
+  flows.receive = createFlow($("receive"), { key: "receive", selectable: true, onCheckout: openCheckout });
+
+  /* ------------------------------------------------------------------
+     Checkout. Left: the chosen photos as previews you can click through.
+     Right: the payment panel. Once paid, the panel slides away, the photo
+     moves to the middle and the full-quality image fades in over the preview.
+  ------------------------------------------------------------------ */
+  var CO = { ctx: null, items: [], index: 0, coupon: "", couponKind: null, paid: false, order: null, fullToken: 0, busy: false };
+  var coFocus = null;
+
+  function quote() {
+    var pr = CO.ctx.pricing, n = CO.items.length;
+    var gross = n * pr.unit_cents;
+    var subtotal = CO.couponKind === "free" ? 0 : gross;
+    var fee = subtotal === 0 ? 0 : Math.floor((subtotal * pr.fee_tenths + 500) / 1000) + pr.fee_fixed_cents;
+    return { n: n, gross: gross, discount: gross - subtotal, fee: fee, total: subtotal + fee };
+  }
+
+  function renderSummary() {
+    var pr = CO.ctx.pricing, q = quote();
+    $("sumlabel").textContent = "Photos (" + q.n + " × " + fmt(pr.unit_cents) + ")";
+    $("sumgross").textContent = fmt(q.gross);
+    $("rowdisc").hidden = !(q.discount > 0);
+    $("sumdisc").textContent = "−" + fmt(q.discount);
+    $("feelabel").textContent = "Transaction fee (" + (pr.fee_tenths / 10) + "% + " + fmt(pr.fee_fixed_cents) + ")";
+    $("sumfee").textContent = fmt(q.fee);
+    $("sumtotal").textContent = fmt(q.total);
+    $("paybtn").textContent = "Pay " + fmt(q.total);
+    $("payslot").textContent = q.total === 0 ? "Nothing to charge for this order."
+                                             : "Card payment isn't connected yet.";
+  }
+
+  function setNote(id, msg, kind) {
+    var el = $(id);
+    el.textContent = msg || "";
+    el.className = "note" + (kind ? " " + kind : "");
+  }
+
+  function openCheckout(ctx) {
+    CO.ctx = ctx;
+    CO.items = ctx.photos.map(function (p) { return { id: p.id, preview: p.preview }; });
+    CO.index = 0;
+    CO.coupon = "";
+    CO.couponKind = null;
+    CO.paid = false;
+    CO.order = null;
+    CO.busy = false;
+    coFocus = document.activeElement;
+
+    $("cogrid").classList.remove("paid");
+    $("copay").hidden = false;
+    $("codl").hidden = true;
+    $("comsg").hidden = true;
+    $("cotitle").textContent = "Checkout";
+    $("coback").textContent = "Back to photos";
+    $("coupon").value = "";
+    $("coupon").disabled = false;
+    $("couponbtn").hidden = false;
+    $("couponrm").hidden = true;
+    setNote("couponmsg", "");
+    setNote("paymsg", "");
+    $("paybtn").disabled = false;
+    $("paybtn").classList.remove("busy");
+
+    $("checkout").hidden = false;
     document.body.style.overflow = "hidden";
-    show(i, 1);
-    $("lbclose").focus();
+    renderSummary();
+    showCoPhoto(0);
+    $("coback").focus();
   }
-  function closeLightbox() {
-    if ($("lightbox").hidden) return;
-    $("lightbox").hidden = true;
+
+  function closeCheckout(silent) {
+    var box = $("checkout");
+    if (box.hidden) return;
+    box.hidden = true;
     document.body.style.overflow = "";
-    if (lastFocus) lastFocus.focus();
+    CO.fullToken++;
+    if (!silent && coFocus && coFocus.focus) coFocus.focus();
   }
-  // step is +1 or -1 so Previous/Next skip any photo that failed to load
-  function show(i, step) {
-    var n = photos.length;
+
+  function backFromCheckout() {
+    closeCheckout(false);
+    if (location.hash.indexOf("#order=") === 0) history.replaceState(null, "", "#receive");
+  }
+  $("coback").addEventListener("click", backFromCheckout);
+
+  /* Show photo i of the order. After paying, the full image fades in over the preview. */
+  function showCoPhoto(i, fadeDelay) {
+    var n = CO.items.length;
     if (!n) return;
-    var idx = ((i % n) + n) % n;
-    for (var tries = 0; tries < n && !photos[idx].ok; tries++) {
-      idx = (((idx + step) % n) + n) % n;
+    CO.index = ((i % n) + n) % n;
+    var it = CO.items[CO.index];
+    var prev = $("coprev"), full = $("cofull");
+    var tok = ++CO.fullToken;
+
+    prev.src = it.preview || it.view || "";
+    $("cocount").textContent = (CO.index + 1) + " of " + plural(n, "photo", "photos");
+
+    full.onload = null;
+    full.style.transition = "none";                  // snap the old full image away, no fade-out
+    full.classList.remove("on");
+    void full.offsetWidth;
+    full.style.transition = "";
+
+    if (CO.paid && it.view) {
+      var fadeIn = function () {
+        if (tok !== CO.fullToken) return;
+        setTimeout(function () { if (tok === CO.fullToken) full.classList.add("on"); }, fadeDelay || 0);
+      };
+      if (full.getAttribute("src") === it.view && full.complete && full.naturalWidth) {
+        fadeIn();
+      } else {
+        full.onload = fadeIn;
+        full.src = it.view;
+      }
+      var a = $("codown");
+      a.href = it.download;
+      a.setAttribute("download", it.name || "");
+    } else {
+      full.removeAttribute("src");
     }
-    current = idx;
-    $("lbimg").src = photos[current].url;
-    $("lbcount").textContent = (current + 1) + " of " + n;
   }
-  $("lbclose").addEventListener("click", closeLightbox);
-  $("lbprev").addEventListener("click", function () { show(current - 1, -1); });
-  $("lbnext").addEventListener("click", function () { show(current + 1, 1); });
+  $("coprevbtn").addEventListener("click", function () { showCoPhoto(CO.index - 1); });
+  $("conextbtn").addEventListener("click", function () { showCoPhoto(CO.index + 1); });
+
+  /* Coupon (checked on the server: the code is never in this page) */
+  $("couponform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (CO.paid || CO.couponKind) return;
+    var code = $("coupon").value.trim();
+    if (!code) return;
+    var btn = $("couponbtn");
+    btn.disabled = true;
+    setNote("couponmsg", "Checking...");
+    postJSON("/api/coupon", { code: code })
+      .then(function (res) {
+        if (res.status === 429) { setNote("couponmsg", res.data.message || "Too many attempts. Wait a minute and try again.", "error"); return; }
+        if (res.ok && res.data.valid) {
+          CO.coupon = code;
+          CO.couponKind = res.data.kind;
+          $("coupon").disabled = true;
+          btn.hidden = true;
+          $("couponrm").hidden = false;
+          setNote("couponmsg", res.data.label || "Coupon applied.", "good");
+          setNote("paymsg", "");
+          renderSummary();
+        } else {
+          setNote("couponmsg", "That code isn't valid.", "error");
+        }
+      })
+      .catch(function () { setNote("couponmsg", "Could not reach the server. Try again in a moment.", "error"); })
+      .finally(function () { btn.disabled = false; });
+  });
+  $("couponrm").addEventListener("click", function () {
+    if (CO.paid) return;
+    CO.coupon = "";
+    CO.couponKind = null;
+    $("coupon").value = "";
+    $("coupon").disabled = false;
+    $("couponbtn").hidden = false;
+    $("couponrm").hidden = true;
+    setNote("couponmsg", "");
+    renderSummary();
+  });
+
+  /* Pay */
+  $("paybtn").addEventListener("click", function () {
+    if (CO.busy || CO.paid) return;
+    var btn = $("paybtn");
+    CO.busy = true;
+    btn.disabled = true;
+    btn.classList.add("busy");
+    setNote("paymsg", "Processing...");
+    postJSON("/api/checkout", {
+      name: CO.ctx.name,
+      date: CO.ctx.date.id,
+      photos: CO.items.map(function (p) { return p.id; }),
+      coupon: CO.coupon
+    })
+      .then(function (res) {
+        if (res.ok && res.data.paid) { finishPaid(res.data); return; }
+        setNote("paymsg", (res.data && res.data.message) || "Something went wrong. Try again in a moment.", "error");
+      })
+      .catch(function () { setNote("paymsg", "Could not reach the server. Try again in a moment.", "error"); })
+      .finally(function () {
+        CO.busy = false;
+        btn.classList.remove("busy");
+        if (!CO.paid) btn.disabled = false;
+      });
+  });
+
+  function orderItems(order) {
+    return order.photos.map(function (p) {
+      return {
+        id: p.id,
+        name: p.name,
+        preview: p.preview ? API_BASE + p.preview : null,
+        view: API_BASE + p.view,
+        download: API_BASE + p.download
+      };
+    });
+  }
+
+  /* Payment went through: the panel slides away and the full photo fades in */
+  function finishPaid(order) {
+    var currentId = CO.items[CO.index] && CO.items[CO.index].id;
+    CO.paid = true;
+    CO.order = order;
+    CO.items = orderItems(order);
+    var idx = 0;
+    CO.items.forEach(function (it, i) { if (it.id === currentId) idx = i; });
+
+    history.replaceState(null, "", "#order=" + order.order);     // refreshing the page brings the photos back
+    $("cotitle").textContent = "Your photos";
+    $("coback").textContent = "Done";
+    $("cozip").href = API_BASE + order.zip;
+    $("codl").hidden = false;
+    setNote("paymsg", "");
+    showCopyNote("Keep this page's link to come back to your photos. Anyone with the link can download them.");
+
+    $("cogrid").classList.add("paid");
+    setTimeout(function () { $("copay").hidden = true; }, 900);
+    showCoPhoto(idx, FADE_DELAY_MS);
+  }
+
+  function showCopyNote(msg) {
+    var el = $("comsg");
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  $("cocopy").addEventListener("click", function () {
+    if (!CO.order) return;
+    var url = location.href.split("#")[0] + "#order=" + CO.order.order;
+    var done = function () { showCopyNote("Link copied. Anyone with the link can download these photos."); };
+    var fail = function () { showCopyNote(url); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, fail);
+    else fail();
+  });
+
+  /* Opening a paid order straight from its link (#order=...) */
+  function openOrder(token) {
+    api("/api/order?token=" + encodeURIComponent(token))
+      .then(function (res) {
+        if (!res.ok || !res.data.photos || !res.data.photos.length) {
+          history.replaceState(null, "", "#receive");
+          flows.receive.say("That order link isn't valid.", true);
+          return;
+        }
+        var order = res.data;
+        CO.ctx = { name: "", pricing: null, date: order.date };
+        CO.items = orderItems(order);
+        CO.index = 0;
+        CO.paid = true;
+        CO.order = order;
+        coFocus = null;
+
+        $("cotitle").textContent = "Your photos";
+        $("coback").textContent = "Done";
+        $("cozip").href = API_BASE + order.zip;
+        $("codl").hidden = false;
+        showCopyNote("Keep this page's link to come back to your photos. Anyone with the link can download them.");
+        $("cogrid").classList.add("paid");
+        $("copay").hidden = true;
+        $("checkout").hidden = false;
+        document.body.style.overflow = "hidden";
+        showCoPhoto(0, 350);
+        $("coback").focus();
+      })
+      .catch(function () {
+        flows.receive.say("Could not reach the server. Try again in a moment.", true);
+      });
+  }
+
   document.addEventListener("keydown", function (e) {
-    if ($("lightbox").hidden) return;
-    if (e.key === "Escape") closeLightbox();
-    if (e.key === "ArrowLeft") show(current - 1, -1);
-    if (e.key === "ArrowRight") show(current + 1, 1);
+    if (!$("lightbox").hidden) {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") show(current - 1, -1);
+      if (e.key === "ArrowRight") show(current + 1, 1);
+      return;
+    }
+    if ($("checkout").hidden) return;
+    var tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (e.key === "Escape") backFromCheckout();
+    if (e.key === "ArrowLeft") showCoPhoto(CO.index - 1);
+    if (e.key === "ArrowRight") showCoPhoto(CO.index + 1);
   });
 
   route();

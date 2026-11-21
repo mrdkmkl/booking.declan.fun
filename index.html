@@ -303,6 +303,10 @@
     .co-pay .inner { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
     .co-stage { padding-left: 1rem; padding-right: 1rem; }
     .cosum-text { font-size: .9rem; }
+    .wiz-nav .submit { flex: 1; width: auto; }
+    .searchrow .submit { width: auto; flex: 0 0 auto; }
+    .pair .narrow { flex-basis: 5.5rem; }
+    #bkmap { height: 240px; }
   }
   @media (pointer: coarse) {
     .back, .link { padding: .75rem .25rem; }
@@ -314,7 +318,57 @@
     .submit { min-height: 44px; }
   }
   #shmsg { margin-top: .4rem; }
+
+  /* Booking wizard */
+  #wiz, #bkreview, #bkdone { max-width: 34rem; }
+  form.plain { display: block; max-width: none; }
+  .q { padding: .25rem 0 0; animation: qin .35s ease both; }
+  .q.back { animation-name: qinback; }
+  @keyframes qin { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes qinback { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+  .qt { margin: 1.5rem 0 1.1rem; font-size: clamp(1.6rem, 5vw, 2.25rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.15; }
+  .qt label { font-size: inherit; color: inherit; }
+  .qh { margin: .6rem 0 0; font-size: .85rem; color: var(--muted); min-height: 1.1rem; }
+  .q input[type="text"], .q input[type="date"], .searchrow input {
+    width: 100%; padding: .9rem 1rem; background: #fff; font-size: 1.1rem;
+    border: 1px solid #aeb4b8; border-radius: 2px; font-family: inherit; min-height: 52px;
+  }
+  .q input:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
+  .pair { display: flex; gap: .75rem; }
+  .pair .field { flex: 1 1 auto; } .pair .narrow { flex: 0 0 7rem; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .choice {
+    padding: 1.15rem 1rem; background: #fff; border: 1px solid #aeb4b8; border-radius: 2px;
+    cursor: pointer; font-size: 1.15rem; transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .choice.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  @media (hover: hover) { .choice:not(.on):hover { border-color: var(--ink); } }
+  .feeamt { margin-top: 1.25rem; animation: qin .3s ease both; }
+  .money { display: flex; align-items: center; gap: .5rem; }
+  .money span { font-size: 1.2rem; color: var(--muted); }
+  .stepper { display: flex; align-items: stretch; gap: .5rem; max-width: 16rem; }
+  .stepper button { flex: 0 0 3.25rem; background: #fff; border: 1px solid #aeb4b8; border-radius: 2px; cursor: pointer; font-size: 1.5rem; line-height: 1; }
+  .stepper input { text-align: center; }
+  .estline { margin: 1rem 0 0; font-size: .95rem; color: var(--ink); }
+  .searchrow { display: flex; gap: .5rem; }
+  .searchrow .submit { flex: 0 0 auto; }
+  .searchrow input { flex: 1 1 auto; min-width: 0; }
+  .results { display: flex; flex-direction: column; gap: 4px; margin-top: .5rem; }
+  .result { text-align: left; padding: .75rem .9rem; background: #fff; border: 1px solid var(--line); border-radius: 2px; cursor: pointer; font-size: .92rem; line-height: 1.35; }
+  .result:hover, .result:focus-visible { border-color: var(--ink); }
+  #bkmap { height: 260px; margin-top: .9rem; background: #e3e6e8; border: 1px solid var(--line); border-radius: 2px; z-index: 0; }
+  .locsel { margin: .6rem 0 0; padding: .7rem .9rem; background: #fff; border-left: 3px solid var(--good); font-size: .92rem; line-height: 1.35; }
+  .wiz-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.25rem; }
+  #wizprog { margin: 0 0 .5rem; }
+  .answers { margin: 0 0 1.5rem; border-top: 1px solid var(--line); }
+  .answers .a { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+  .answers dt { color: var(--muted); font-size: .85rem; margin: 0; }
+  .answers dd { margin: .1rem 0 0; font-size: 1rem; word-break: break-word; }
+  .answers .edit { flex: 0 0 auto; }
+  .paybox .estnote { margin: .8rem 0 0; padding: .7rem .85rem; background: #eceeef; border-radius: 2px; font-size: .85rem; color: var(--muted); }
+  #bkreview .back { margin-top: 1rem; }
   @media (prefers-reduced-motion: reduce) {
+    .q, .feeamt { animation: none !important; }
     * { transition: none !important; }
     .progress.indeterminate .barfill { animation: none; left: 0; width: 100%; opacity: .4; }
   }
@@ -340,13 +394,135 @@
 <section id="booking" class="page" hidden>
   <button class="back" data-go="home">Back</button>
   <h1>Booking</h1>
-  <p class="lede">Booking is not open yet.</p>
+  <p class="lede">A few quick questions to reserve a session. A $4.00 reservation holds your spot.</p>
+
+  <div id="wiz">
+    <div class="progress" id="wizprog">
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Booking progress" id="wizbar"><div class="barfill" id="wizfill"></div></div>
+      <span class="ptext" id="wizstep"></span>
+    </div>
+
+    <form class="plain" id="wizform" autocomplete="off" novalidate>
+      <div class="q" data-step="name">
+        <h2 class="qt"><label for="bk-name">What is your name?</label></h2>
+        <input id="bk-name" type="text" maxlength="100" autocomplete="name">
+      </div>
+
+      <div class="q" data-step="contact" hidden>
+        <h2 class="qt"><label for="bk-contact">What's your phone number or email?</label></h2>
+        <input id="bk-contact" type="text" maxlength="120" autocomplete="email" autocapitalize="none" spellcheck="false">
+        <p class="qh">We'll only use it to confirm your session.</p>
+      </div>
+
+      <div class="q" data-step="date" hidden>
+        <h2 class="qt"><label for="bk-date">What day is it?</label></h2>
+        <input id="bk-date" type="date">
+      </div>
+
+      <div class="q" data-step="player" hidden>
+        <h2 class="qt">Which player?</h2>
+        <div class="pair">
+          <div class="field"><label for="bk-pname">Player name</label><input id="bk-pname" type="text" maxlength="60"></div>
+          <div class="field narrow"><label for="bk-pnum">Number</label><input id="bk-pnum" type="text" maxlength="20" inputmode="numeric"></div>
+        </div>
+        <p class="qh">Name, number, or both.</p>
+      </div>
+
+      <div class="q" data-step="location" hidden>
+        <h2 class="qt"><label for="bk-locq">Where will it be?</label></h2>
+        <div class="searchrow">
+          <input id="bk-locq" type="text" maxlength="150" placeholder="Search an address or place" autocomplete="off">
+          <button type="button" class="submit" id="bk-locgo">Search</button>
+        </div>
+        <p class="qh" id="bk-locmsg" role="status" aria-live="polite"></p>
+        <div class="results" id="bk-locres"></div>
+        <div id="bkmap" aria-label="Map"></div>
+        <p class="qh" id="bkmapnote"></p>
+        <p class="locsel" id="bk-locsel" hidden></p>
+      </div>
+
+      <div class="q" data-step="attending" hidden>
+        <h2 class="qt">Will you be there?</h2>
+        <div class="choices" data-choice="attending">
+          <button type="button" class="choice" data-val="yes">Yes</button>
+          <button type="button" class="choice" data-val="no">No</button>
+        </div>
+      </div>
+
+      <div class="q" data-step="sport" hidden>
+        <h2 class="qt">Is it a sport?</h2>
+        <div class="choices" data-choice="sport">
+          <button type="button" class="choice" data-val="yes">Yes</button>
+          <button type="button" class="choice" data-val="no">No</button>
+        </div>
+      </div>
+
+      <div class="q" data-step="sportname" hidden>
+        <h2 class="qt"><label for="bk-sportname">Which sport?</label></h2>
+        <input id="bk-sportname" type="text" maxlength="60" placeholder="Football, soccer, track...">
+      </div>
+
+      <div class="q" data-step="fee" hidden>
+        <h2 class="qt">Is there a fee to enter?</h2>
+        <div class="choices" data-choice="fee">
+          <button type="button" class="choice" data-val="yes">Yes</button>
+          <button type="button" class="choice" data-val="no">No</button>
+        </div>
+        <div class="field feeamt" id="bk-feebox" hidden>
+          <label for="bk-feeamt">How much is it?</label>
+          <div class="money"><span aria-hidden="true">$</span><input id="bk-feeamt" type="text" inputmode="decimal" maxlength="9" placeholder="0.00"></div>
+        </div>
+      </div>
+
+      <div class="q" data-step="photos" hidden>
+        <h2 class="qt"><label for="bk-photos">How many photos do you want?</label></h2>
+        <div class="stepper">
+          <button type="button" id="bk-minus" aria-label="Fewer photos">&minus;</button>
+          <input id="bk-photos" type="text" inputmode="numeric" maxlength="3" value="4">
+          <button type="button" id="bk-plus" aria-label="More photos">+</button>
+        </div>
+        <p class="qh">At least 4 photos.</p>
+        <p class="estline" id="bk-est"></p>
+      </div>
+    </form>
+
+    <p class="status error" id="wizerr" role="alert"></p>
+    <div class="wiz-nav">
+      <button type="button" class="back" id="wizback">Back</button>
+      <button type="button" class="submit" id="wiznext">Next</button>
+    </div>
+  </div>
+
+  <div id="bkreview" hidden>
+    <h2 class="qt">Review &amp; reserve</h2>
+    <dl class="answers" id="bk-answers"></dl>
+    <div class="paybox">
+      <div id="bk-calc" class="note" role="status">Working out mileage...</div>
+      <div id="bk-rows" hidden>
+        <div class="row"><span>Reservation</span><span id="bkr-dep"></span></div>
+        <div class="row"><span id="bkr-mlabel"></span><span id="bkr-mile"></span></div>
+        <div class="row"><span id="bkr-flabel"></span><span id="bkr-fee"></span></div>
+        <div class="row total"><span>Total today</span><span id="bkr-total"></span></div>
+        <p class="estnote" id="bkr-est"></p>
+      </div>
+      <div class="slot" id="bk-slot" hidden>Card payment isn't connected yet.</div>
+      <button type="button" class="submit paybtn" id="bkpay" disabled>Pay</button>
+      <p class="note" id="bkpaymsg" role="status" aria-live="polite"></p>
+      <button type="button" class="back" id="bkrback">Back to questions</button>
+    </div>
+  </div>
+
+  <div id="bkdone" hidden>
+    <h2 class="qt">You're booked.</h2>
+    <p class="lede" id="bkdonetxt"></p>
+    <button type="button" class="submit" data-go="home">Done</button>
+  </div>
 </section>
 
 <section id="receive" class="page" hidden>
   <button class="back" data-go="home">Back</button>
   <h1>Receive photos &amp; pay</h1>
-  <p class="lede">Enter your name exactly as it was given when you booked, pick a date, then choose the photos you want. Photos stay as watermarked previews until you've paid.</p>
+  <p class="lede">Enter your name exactly as it was given when you booked, pick a date, then choose the photos you want (at least 4). Photos stay as watermarked previews until you've paid.</p>
   <div data-flow></div>
 </section>
 
@@ -386,7 +562,7 @@
     <div class="tools" data-el="tools" hidden>
       <button type="button" class="link" data-el="selall">Select all</button>
       <button type="button" class="link" data-el="selnone">Clear</button>
-      <span class="hint">Tap a photo to select it. Use View to enlarge it.</span>
+      <span class="hint">Tap a photo to select it. Use View to enlarge it. Choose at least 4 photos.</span>
     </div>
     <div class="grid" data-el="grid"></div>
   </div>
@@ -505,6 +681,7 @@
 
   /* Navigation (uses the URL hash so the browser Back button works) */
   var flows = {};
+  var bookingApi = null;
   function route() {
     var raw = location.hash.slice(1), id = raw, orderToken = null;
     if (raw.indexOf("order=") === 0) { id = "receive"; orderToken = raw.slice(6); }   // a paid order's link
@@ -514,6 +691,7 @@
     if (!orderToken) closeCheckout(true);
     window.scrollTo(0, 0);
     if (flows[id]) flows[id].focus();
+    if (id === "booking" && bookingApi) bookingApi.open();
     if (orderToken) openOrder(orderToken);
   }
   document.addEventListener("click", function (e) {
@@ -874,13 +1052,20 @@
       paintSel(i);
       updateBar();
     }
+    // at least 4 photos per order (fewer only when that day has fewer photos left)
+    function minNeeded() {
+      var min = (S.pricing && S.pricing.min_photos) || 4;
+      return Math.max(1, Math.min(min, S.photos.length || min));
+    }
     function updateBar() {
       if (!selectable) return;
       var n = selectedIndexes().length;
       var unit = S.pricing ? S.pricing.unit_cents : 0;
-      E("cosum").textContent = n ? plural(n, "photo", "photos") + " selected · " + fmt(n * unit) + " before fees"
-                                : "No photos selected";
-      E("cobtn").disabled = (n === 0);
+      var need = minNeeded();
+      E("cosum").textContent = !n ? "Choose at least " + plural(need, "photo", "photos")
+                             : n < need ? plural(n, "photo", "photos") + " selected · choose " + (need - n) + " more"
+                             : plural(n, "photo", "photos") + " selected · " + fmt(n * unit) + " before fees";
+      E("cobtn").disabled = (n < need);
     }
     E("selall").addEventListener("click", function () {
       S.photos.forEach(function (p, i) { if (!p.tile.classList.contains("failed")) S.selected[i] = true; paintSel(i); });
@@ -893,7 +1078,7 @@
     });
     E("cobtn").addEventListener("click", function () {
       var idx = selectedIndexes();
-      if (!idx.length || !opts.onCheckout) return;
+      if (!idx.length || idx.length < minNeeded() || !opts.onCheckout) return;
       opts.onCheckout({
         name: S.name,
         folder: S.folder,
@@ -1348,6 +1533,389 @@
     if (e.key === "ArrowLeft") showCoPhoto(CO.index - 1);
     if (e.key === "ArrowRight") showCoPhoto(CO.index + 1);
   });
+
+    /* ------------------------------------------------------------------
+     Booking: one question at a time, then a review with the reservation.
+     $4.00 reservation + $0.40 per mile + card fee. The photo estimate is
+     only informational and is never part of the total.
+  ------------------------------------------------------------------ */
+  bookingApi = (function () {
+    var ALL = ["name", "contact", "date", "player", "location", "attending", "sport", "sportname", "fee", "photos"];
+    var LABELS = { name: "Name", contact: "Phone or email", date: "Date", player: "Player", location: "Location",
+                   attending: "Attending", sport: "Sport event", sportname: "Sport", fee: "Entry fee", photos: "Photos wanted" };
+    var D = { name: "", contact: "", date: "", pname: "", pnum: "", loc: null, attending: null, sport: null,
+              sportname: "", fee: null, feeamt: "", photos: 4 };
+    var B = { cur: "name", editing: false, info: null, quote: null, busy: false, done: false };
+    var MIN_PHOTOS = 4;
+
+    function active() { return ALL.filter(function (s) { return s !== "sportname" || D.sport === true; }); }
+    function err(msg) { $("wizerr").textContent = msg || ""; }
+    function stepEl(id) { return document.querySelector('.q[data-step="' + id + '"]'); }
+    function money(c) { return fmt(c); }
+    function todayISO() {
+      var d = new Date();
+      return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    }
+    function prettyDate(iso) {
+      var p = iso.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+      return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    }
+    function photoCents() { return (B.info && B.info.photo_cents) || 135; }
+
+    /* ---- reading and checking answers ---- */
+    function collect(id) {
+      if (id === "name") D.name = $("bk-name").value.trim();
+      else if (id === "contact") D.contact = $("bk-contact").value.trim();
+      else if (id === "date") D.date = $("bk-date").value;
+      else if (id === "player") { D.pname = $("bk-pname").value.trim(); D.pnum = $("bk-pnum").value.trim(); }
+      else if (id === "sportname") D.sportname = $("bk-sportname").value.trim();
+      else if (id === "fee") D.feeamt = $("bk-feeamt").value.trim();
+      else if (id === "photos") D.photos = parseInt($("bk-photos").value, 10) || 0;
+    }
+    function check(id) {
+      if (id === "name") return D.name ? "" : "Please enter your name.";
+      if (id === "contact") {
+        var digits = D.contact.replace(/\D/g, "");
+        var email = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(D.contact);
+        var phone = /^[\d\s()+\-.]+$/.test(D.contact) && digits.length >= 10 && digits.length <= 15;
+        return email || phone ? "" : "Enter a phone number (with area code) or an email.";
+      }
+      if (id === "date") return D.date && D.date >= todayISO() ? "" : "Pick a date from today onward.";
+      if (id === "player") return D.pname || D.pnum ? "" : "Enter the player's name or number.";
+      if (id === "location") return D.loc ? "" : "Search for the place or tap the map to choose it.";
+      if (id === "attending") return D.attending === null ? "Choose yes or no." : "";
+      if (id === "sport") return D.sport === null ? "Choose yes or no." : "";
+      if (id === "sportname") return D.sportname ? "" : "Which sport is it?";
+      if (id === "fee") {
+        if (D.fee === null) return "Choose yes or no.";
+        if (D.fee && !/^\d{1,6}(\.\d{1,2})?$/.test(D.feeamt.replace(/[$,\s]/g, ""))) return "Enter the entry fee as a dollar amount, like 10 or 7.50.";
+        return "";
+      }
+      if (id === "photos") return D.photos >= MIN_PHOTOS && D.photos <= 500 ? "" : "Choose at least " + MIN_PHOTOS + " photos (up to 500).";
+      return "";
+    }
+    function firstProblem() {
+      var a = active();
+      for (var i = 0; i < a.length; i++) if (check(a[i])) return a[i];
+      return null;
+    }
+
+    /* ---- showing a question ---- */
+    function show(id, dir) {
+      err("");
+      B.cur = id;
+      document.querySelectorAll("#wizform .q").forEach(function (el) { el.hidden = true; el.classList.remove("back"); });
+      var el = stepEl(id);
+      el.hidden = false;
+      if (dir < 0) el.classList.add("back");
+      el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+      var a = active(), idx = a.indexOf(id);
+      $("wizstep").textContent = "Question " + (idx + 1) + " of " + a.length;
+      var pct = Math.round((idx / a.length) * 100);
+      $("wizfill").style.width = pct + "%";
+      $("wizbar").setAttribute("aria-valuenow", String(pct));
+      $("wizback").style.visibility = idx === 0 && !B.editing ? "hidden" : "visible";
+      $("wiznext").textContent = (B.editing || idx === a.length - 1) ? "Review" : "Next";
+      if (id === "location") { ensureMap(); } 
+      else if (id === "photos") updateEstimate();
+      var first = el.querySelector('input:not([type="hidden"])');
+      if (first && !first.closest("[hidden]") && id !== "location") first.focus({ preventScroll: true });
+      if (idx > 0 && window.innerWidth <= 860) $("wiz").scrollIntoView({ block: "start" });
+    }
+
+    function paint() {                       // put saved answers back in the fields
+      $("bk-name").value = D.name; $("bk-contact").value = D.contact; $("bk-date").value = D.date;
+      $("bk-pname").value = D.pname; $("bk-pnum").value = D.pnum;
+      $("bk-sportname").value = D.sportname; $("bk-feeamt").value = D.feeamt; $("bk-photos").value = D.photos;
+      ["attending", "sport", "fee"].forEach(function (k) { markChoice(k); });
+      $("bk-feebox").hidden = D.fee !== true;
+      showLocSel();
+    }
+    function markChoice(k) {
+      var val = D[k];
+      document.querySelectorAll('[data-choice="' + k + '"] .choice').forEach(function (b) {
+        var on = val !== null && b.getAttribute("data-val") === (val ? "yes" : "no");
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+
+    /* ---- moving between questions ---- */
+    function advance() {
+      collect(B.cur);
+      var msg = check(B.cur);
+      if (msg) { err(msg); return; }
+      var a = active(), idx = a.indexOf(B.cur);
+      if (B.editing) {                       // after editing one answer, only stop at ones that still need an answer
+        var miss = firstProblem();
+        if (miss) { show(miss, 1); return; }
+        B.editing = false; review(); return;
+      }
+      if (idx < a.length - 1) show(a[idx + 1], 1); else review();
+    }
+    function goBack() {
+      collect(B.cur);
+      var a = active(), idx = a.indexOf(B.cur);
+      if (B.editing) { B.editing = false; review(); return; }
+      if (idx > 0) show(a[idx - 1], -1);
+    }
+    var advTimer = null;
+    function pick(k, val) {                  // yes/no questions move on by themselves
+      D[k] = val;
+      markChoice(k);
+      err("");
+      if (k === "fee") {
+        $("bk-feebox").hidden = !val;
+        if (val) { $("bk-feeamt").focus({ preventScroll: true }); return; }
+      }
+      if (k === "sport" && !val) D.sportname = "";
+      clearTimeout(advTimer);
+      advTimer = setTimeout(advance, 260);
+    }
+    document.querySelectorAll(".choices").forEach(function (box) {
+      box.addEventListener("click", function (e) {
+        var b = e.target.closest(".choice");
+        if (b) pick(box.getAttribute("data-choice"), b.getAttribute("data-val") === "yes");
+      });
+    });
+    $("wiznext").addEventListener("click", advance);
+    $("wizback").addEventListener("click", goBack);
+    $("wizform").addEventListener("submit", function (e) { e.preventDefault(); advance(); });
+    $("wizform").addEventListener("keydown", function (e) {    // Enter = Next (the form has no submit button)
+      if (e.key !== "Enter" || e.target.tagName !== "INPUT" || e.target.id === "bk-locq") return;
+      e.preventDefault();
+      advance();
+    });
+
+    /* ---- photo count and the estimate (not part of the total) ---- */
+    function updateEstimate() {
+      var n = parseInt($("bk-photos").value, 10) || 0;
+      $("bk-est").textContent = n >= MIN_PHOTOS
+        ? "Estimated cost of photos: " + money(n * photoCents()) + " (" + n + " × " + money(photoCents()) + "). Not charged today."
+        : "";
+    }
+    function bump(by) {
+      var n = (parseInt($("bk-photos").value, 10) || MIN_PHOTOS) + by;
+      $("bk-photos").value = Math.max(MIN_PHOTOS, Math.min(500, n));
+      updateEstimate();
+    }
+    $("bk-minus").addEventListener("click", function () { bump(-1); });
+    $("bk-plus").addEventListener("click", function () { bump(1); });
+    $("bk-photos").addEventListener("input", function () { this.value = this.value.replace(/\D/g, ""); updateEstimate(); });
+
+    /* ---- location: search + map (OpenStreetMap) ---- */
+    var map = null, marker = null, mapState = "idle";
+    function loadLeaflet(cb) {
+      if (window.L) return cb(true);
+      var css = document.createElement("link");
+      css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(css);
+      var sc = document.createElement("script");
+      sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      sc.onload = function () { cb(!!window.L); };
+      sc.onerror = function () { cb(false); };
+      document.head.appendChild(sc);
+    }
+    function ensureMap() {
+      if (map) { setTimeout(function () { map.invalidateSize(); }, 60); return; }
+      if (mapState === "loading" || mapState === "failed") return;
+      mapState = "loading";
+      $("bkmapnote").textContent = "Loading map...";
+      loadLeaflet(function (ok) {
+        if (!ok) {
+          mapState = "failed";
+          $("bkmap").hidden = true;
+          $("bkmapnote").textContent = "The map couldn't load. Search for the address above instead.";
+          return;
+        }
+        var c = (B.info && B.info.map_center) || { lat: 39.5, lon: -98.35, zoom: 4 };
+        map = L.map("bkmap", { scrollWheelZoom: false }).setView([c.lat, c.lon], c.zoom);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+        map.on("click", function (e) { pickPoint(e.latlng.lat, e.latlng.lng, ""); });
+        mapState = "ready";
+        $("bkmapnote").textContent = "Search above, or tap the map to drop a pin.";
+        if (D.loc) placeMarker(D.loc.lat, D.loc.lon, 15);
+        setTimeout(function () { map.invalidateSize(); }, 60);
+      });
+    }
+    function placeMarker(lat, lon, zoom) {
+      if (!map) return;
+      if (marker) marker.setLatLng([lat, lon]); else marker = L.marker([lat, lon]).addTo(map);
+      map.setView([lat, lon], zoom || map.getZoom());
+    }
+    function showLocSel() {
+      var el = $("bk-locsel");
+      el.hidden = !D.loc;
+      if (D.loc) el.textContent = "Selected: " + D.loc.label;
+    }
+    function pickPoint(lat, lon, label) {
+      D.loc = { label: label || "Pinned location", lat: lat, lon: lon };
+      $("bk-locres").textContent = "";
+      $("bk-locmsg").textContent = "";
+      err("");
+      showLocSel();
+      placeMarker(lat, lon, label ? 15 : undefined);
+      if (!label) {                           // a dropped pin: try to find a street name for it
+        api("/api/reverse?lat=" + lat.toFixed(5) + "&lon=" + lon.toFixed(5)).then(function (res) {
+          if (res.ok && res.data.label && D.loc && D.loc.lat === lat && D.loc.lon === lon) { D.loc.label = res.data.label; showLocSel(); }
+        }).catch(function () {});
+      }
+    }
+    function searchPlace() {
+      var q = $("bk-locq").value.trim();
+      var box = $("bk-locres");
+      box.textContent = "";
+      if (q.length < 3) { $("bk-locmsg").textContent = "Type at least 3 letters."; return; }
+      $("bk-locmsg").textContent = "Searching...";
+      $("bk-locgo").disabled = true;
+      api("/api/geocode?q=" + encodeURIComponent(q)).then(function (res) {
+        if (!res.ok) { $("bk-locmsg").textContent = res.data.message || "Couldn't search right now."; return; }
+        var list = res.data.results || [];
+        $("bk-locmsg").textContent = list.length ? "Choose the right one:" : "Nothing found. Try adding the city, or tap the map.";
+        list.forEach(function (r) {
+          var b = document.createElement("button");
+          b.type = "button"; b.className = "result"; b.textContent = r.label;
+          b.addEventListener("click", function () { pickPoint(r.lat, r.lon, r.label); });
+          box.appendChild(b);
+        });
+      }).catch(function () {
+        $("bk-locmsg").textContent = "Could not reach the server. Try again in a moment.";
+      }).finally(function () { $("bk-locgo").disabled = false; });
+    }
+    $("bk-locgo").addEventListener("click", searchPlace);
+    $("bk-locq").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); searchPlace(); } });
+
+    /* ---- review + reservation ---- */
+    function answerRows() {
+      var rows = [
+        ["name", D.name], ["contact", D.contact], ["date", prettyDate(D.date)],
+        ["player", [D.pname, D.pnum ? "#" + D.pnum : ""].filter(Boolean).join("  ")],
+        ["location", D.loc.label], ["attending", D.attending ? "Yes" : "No"], ["sport", D.sport ? "Yes" : "No"]
+      ];
+      if (D.sport) rows.push(["sportname", D.sportname]);
+      rows.push(["fee", D.fee ? "Yes, " + money(Math.round(parseFloat(D.feeamt.replace(/[$,\s]/g, "")) * 100)) : "No"]);
+      rows.push(["photos", String(D.photos)]);
+      return rows;
+    }
+    function review() {
+      B.cur = "review";
+      err("");
+      $("wiz").hidden = true;
+      $("bkreview").hidden = false;
+      $("bkdone").hidden = true;
+      var list = $("bk-answers");
+      list.textContent = "";
+      answerRows().forEach(function (r) {
+        var row = document.createElement("div"); row.className = "a";
+        var left = document.createElement("div");
+        var dt = document.createElement("dt"); dt.textContent = LABELS[r[0]];
+        var dd = document.createElement("dd"); dd.textContent = r[1];
+        left.appendChild(dt); left.appendChild(dd);
+        var ed = document.createElement("button"); ed.type = "button"; ed.className = "link edit"; ed.textContent = "Edit";
+        ed.addEventListener("click", function () { B.editing = true; $("bkreview").hidden = true; $("wiz").hidden = false; show(r[0], -1); });
+        row.appendChild(left); row.appendChild(ed);
+        list.appendChild(row);
+      });
+      getQuote();
+      $("bkreview").scrollIntoView({ block: "start" });
+    }
+    function getQuote() {
+      B.quote = null;
+      $("bk-rows").hidden = true;
+      $("bk-slot").hidden = true;
+      $("bkpay").disabled = true;
+      $("bkpay").textContent = "Pay";
+      setNote("bkpaymsg", "");
+      var calc = $("bk-calc");
+      calc.hidden = false; calc.className = "note"; calc.textContent = "Working out mileage...";
+      postJSON("/api/quote", { location: { lat: D.loc.lat, lon: D.loc.lon }, photos: D.photos }).then(function (res) {
+        if (!res.ok) { quoteFailed(res.data && res.data.message); return; }
+        B.quote = res.data;
+        renderQuote();
+      }).catch(function () { quoteFailed(); });
+    }
+    function quoteFailed(msg) {
+      var calc = $("bk-calc");
+      calc.className = "note error";
+      calc.textContent = (msg || "Couldn't work out the mileage.") + " ";
+      var b = document.createElement("button"); b.type = "button"; b.className = "link"; b.textContent = "Try again";
+      b.addEventListener("click", getQuote);
+      calc.appendChild(b);
+    }
+    function renderQuote() {
+      var q = B.quote, info = B.info || {};
+      $("bk-calc").hidden = true;
+      $("bk-rows").hidden = false;
+      $("bk-slot").hidden = false;
+      $("bkr-dep").textContent = money(q.deposit_cents);
+      $("bkr-mlabel").textContent = "Mileage (" + q.miles.toFixed(1) + " mi × " + money(q.per_mile_cents) + (q.approx ? ", approx." : "") + ")";
+      $("bkr-mile").textContent = money(q.mileage_cents);
+      $("bkr-flabel").textContent = "Transaction fee (" + ((info.fee_tenths || 29) / 10) + "% + " + money(info.fee_fixed_cents || 30) + ")";
+      $("bkr-fee").textContent = money(q.fee_cents);
+      $("bkr-total").textContent = money(q.total_cents);
+      $("bkr-est").textContent = "Estimated cost of photos (" + q.photos + " × " + money(q.photo_cents) + "): " + money(q.estimate_cents) +
+                                 ". Not part of today's total.";
+      $("bkpay").textContent = "Pay " + money(q.total_cents);
+      $("bkpay").disabled = false;
+    }
+    $("bkrback").addEventListener("click", function () {
+      $("bkreview").hidden = true; $("wiz").hidden = false;
+      B.editing = false;
+      show(active()[active().length - 1], -1);
+    });
+    $("bkpay").addEventListener("click", function () {
+      if (B.busy || !B.quote) return;
+      B.busy = true;
+      var btn = $("bkpay");
+      btn.disabled = true; btn.classList.add("busy");
+      setNote("bkpaymsg", "Processing...");
+      postJSON("/api/booking", {
+        name: D.name, contact: D.contact, date: D.date, player_name: D.pname, player_number: D.pnum,
+        location: D.loc, attending: D.attending, is_sport: D.sport, sport: D.sportname,
+        entry_fee: D.fee, entry_fee_amount: D.feeamt, photos: D.photos
+      }).then(function (res) {
+        if (res.ok && res.data.booked) { finish(res.data); return; }
+        setNote("bkpaymsg", (res.data && res.data.message) || "Something went wrong. Try again in a moment.", "error");
+      }).catch(function () {
+        setNote("bkpaymsg", "Could not reach the server. Try again in a moment.", "error");
+      }).finally(function () {
+        B.busy = false; btn.classList.remove("busy");
+        if (!B.done) btn.disabled = false;
+      });
+    });
+    function finish(data) {
+      B.done = true;
+      $("bkreview").hidden = true;
+      $("bkdone").hidden = false;
+      $("bkdonetxt").textContent = "Reservation " + data.reference + " for " + prettyDate(data.date) + ". Total paid: " + money(data.totals.total_cents) + ".";
+      $("bkdone").scrollIntoView({ block: "start" });
+    }
+    function reset() {
+      D = { name: "", contact: "", date: "", pname: "", pnum: "", loc: null, attending: null, sport: null, sportname: "", fee: null, feeamt: "", photos: 4 };
+      B.done = false; B.editing = false; B.quote = null;
+      $("bkdone").hidden = true; $("bkreview").hidden = true; $("wiz").hidden = false;
+      $("bk-locq").value = ""; $("bk-locres").textContent = ""; $("bk-locmsg").textContent = "";
+      if (marker && map) { map.removeLayer(marker); marker = null; }
+      paint();
+      show("name", 1);
+    }
+
+    function open() {
+      if (B.done) reset();
+      if (!B.info) {
+        B.info = {};
+        api("/api/booking-info").then(function (res) {
+          if (res.ok) { B.info = res.data; MIN_PHOTOS = res.data.min_photos || 4; }
+          else B.info = null;
+        }).catch(function () { B.info = null; });
+      }
+      $("bk-date").min = todayISO();
+      if ($("wiz").hidden === false) show(B.cur === "review" ? active()[0] : B.cur, 1);
+    }
+    paint();
+    $("bk-photos").value = D.photos;
+    return { open: open };
+  })();
 
   route();
 })();

@@ -609,7 +609,7 @@
       hideProgress();
       setStatus("");
 
-      var cacheKey = "dates1:" + name.toLowerCase();
+      var cacheKey = "dates2:" + opts.key + ":" + name.toLowerCase();
       var cached = readCache(cacheKey);
       if (cached) {
         btn.disabled = false;
@@ -618,7 +618,7 @@
       }
 
       showProgress("Looking for your gallery...", 0, null);
-      api("/api/gallery?name=" + encodeURIComponent(name))
+      api("/api/gallery?name=" + encodeURIComponent(name) + (selectable ? "&unbought=1" : ""))
         .then(function (res) {
           if (token !== S.token) return;
           hideProgress();
@@ -646,7 +646,7 @@
       E("who").textContent = S.folder;
       E("dcount").textContent = plural(S.dates.length, "date", "dates");
       renderDates();
-      if (!S.dates.length) { showStep("none"); setStatus("This gallery has no photos yet."); return; }
+      if (!S.dates.length) { showStep("none"); setStatus(selectable ? "You've already received all of your photos." : "This gallery has no photos yet."); return; }
       showStep("dates");
     }
 
@@ -705,12 +705,12 @@
       showStep("photos");
       updateBar();
 
-      var cacheKey = "photos1:" + S.name.toLowerCase() + "|" + d.id;
+      var cacheKey = "photos2:" + opts.key + ":" + S.name.toLowerCase() + "|" + d.id;
       var cached = readCache(cacheKey);
       if (cached) { renderPhotos(cached, token); return; }
 
       showProgress("Loading photos...", 0, null);
-      api("/api/photos?name=" + encodeURIComponent(S.name) + "&date=" + encodeURIComponent(d.id))
+      api("/api/photos?name=" + encodeURIComponent(S.name) + "&date=" + encodeURIComponent(d.id) + (selectable ? "&unbought=1" : ""))
         .then(function (res) {
           if (token !== S.token) return;
           if (!res.ok) {
@@ -867,6 +867,13 @@
     });
 
     return {
+      // After a purchase: forget cached lists and look the gallery up again so bought photos are gone
+      reload: function () {
+        try {
+          Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf("dates2:") === 0 || k.indexOf("photos2:") === 0) sessionStorage.removeItem(k); });
+        } catch (err) { /* ignore */ }
+        if (S.name) E("lookup").requestSubmit();
+      },
       focus: function () { if (E("lookup").offsetParent !== null || true) nameInput.focus({ preventScroll: true }); },
       say: setStatus
     };
@@ -880,7 +887,7 @@
      Right: the payment panel. Once paid, the panel slides away, the photo
      moves to the middle and the full-quality image fades in over the preview.
   ------------------------------------------------------------------ */
-  var CO = { ctx: null, items: [], index: 0, coupon: "", couponKind: null, paid: false, order: null, fullToken: 0, busy: false };
+  var CO = { fadePending: false, ctx: null, items: [], index: 0, coupon: "", couponKind: null, paid: false, order: null, fullToken: 0, busy: false };
   var coFocus = null;
 
   function quote() {
@@ -918,6 +925,7 @@
     CO.coupon = "";
     CO.couponKind = null;
     CO.paid = false;
+    CO.fadePending = false;
     CO.order = null;
     CO.busy = false;
     coFocus = document.activeElement;
@@ -954,7 +962,9 @@
   }
 
   function backFromCheckout() {
+    var wasPaid = CO.paid && CO.ctx && CO.ctx.name;
     closeCheckout(false);
+    if (wasPaid) flows.receive.reload();
     if (location.hash.indexOf("#order=") === 0) history.replaceState(null, "", "#receive");
   }
   $("coback").addEventListener("click", backFromCheckout);
@@ -968,7 +978,10 @@
     var prev = $("coprev"), full = $("cofull");
     var tok = ++CO.fullToken;
 
-    prev.src = it.preview || it.view || "";
+    var animate = CO.paid && CO.fadePending;          // the fade-in happens once: on the first photo after paying
+    if (CO.paid) CO.fadePending = false;
+    if (CO.paid && !animate) prev.removeAttribute("src");   // later photos go straight to the full image
+    else prev.src = it.preview || it.view || "";
     $("cocount").textContent = (CO.index + 1) + " of " + plural(n, "photo", "photos");
 
     full.onload = null;
@@ -980,6 +993,7 @@
     if (CO.paid && it.view) {
       var fadeIn = function () {
         if (tok !== CO.fullToken) return;
+        if (!animate) { full.style.transition = "none"; full.classList.add("on"); return; }
         setTimeout(function () { if (tok === CO.fullToken) full.classList.add("on"); }, fadeDelay || 0);
       };
       if (full.getAttribute("src") === it.view && full.complete && full.naturalWidth) {
@@ -1080,6 +1094,7 @@
   function finishPaid(order) {
     var currentId = CO.items[CO.index] && CO.items[CO.index].id;
     CO.paid = true;
+    CO.fadePending = true;
     CO.order = order;
     CO.items = orderItems(order);
     var idx = 0;
@@ -1127,6 +1142,7 @@
         CO.items = orderItems(order);
         CO.index = 0;
         CO.paid = true;
+        CO.fadePending = true;
         CO.order = order;
         coFocus = null;
 

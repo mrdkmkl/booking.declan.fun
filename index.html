@@ -501,10 +501,20 @@
       <div id="bk-rows" hidden>
         <div class="row"><span>Reservation</span><span id="bkr-dep"></span></div>
         <div class="row"><span id="bkr-mlabel"></span><span id="bkr-mile"></span></div>
+        <div class="row disc" id="bkr-discrow" hidden><span>Coupon</span><span id="bkr-disc"></span></div>
         <div class="row"><span id="bkr-flabel"></span><span id="bkr-fee"></span></div>
         <div class="row total"><span>Total today</span><span id="bkr-total"></span></div>
         <p class="estnote" id="bkr-est"></p>
       </div>
+      <form class="coupon" id="bkcouponform" autocomplete="off" hidden>
+        <div class="field">
+          <label for="bkcoupon">Coupon code</label>
+          <input id="bkcoupon" type="text" maxlength="64" autocapitalize="characters" spellcheck="false">
+        </div>
+        <button class="submit" type="submit" id="bkcouponbtn">Apply</button>
+        <button class="submit" type="button" id="bkcouponrm" hidden>Remove</button>
+      </form>
+      <p class="note" id="bkcouponmsg" role="status" aria-live="polite"></p>
       <div class="slot" id="bk-slot" hidden>Card payment isn't connected yet.</div>
       <button type="button" class="submit paybtn" id="bkpay" disabled>Pay</button>
       <p class="note" id="bkpaymsg" role="status" aria-live="polite"></p>
@@ -1545,7 +1555,7 @@
                    attending: "Attending", sport: "Sport event", sportname: "Sport", fee: "Entry fee", photos: "Photos wanted" };
     var D = { name: "", contact: "", date: "", pname: "", pnum: "", loc: null, attending: null, sport: null,
               sportname: "", fee: null, feeamt: "", photos: 4 };
-    var B = { cur: "name", editing: false, info: null, quote: null, busy: false, done: false };
+    var B = { coupon: "", cur: "name", editing: false, info: null, quote: null, busy: false, done: false };
     var MIN_PHOTOS = 4;
 
     function active() { return ALL.filter(function (s) { return s !== "sportname" || D.sport === true; }); }
@@ -1823,13 +1833,17 @@
       B.quote = null;
       $("bk-rows").hidden = true;
       $("bk-slot").hidden = true;
+      $("bkcouponform").hidden = true;
       $("bkpay").disabled = true;
       $("bkpay").textContent = "Pay";
       setNote("bkpaymsg", "");
       var calc = $("bk-calc");
       calc.hidden = false; calc.className = "note"; calc.textContent = "Working out mileage...";
-      postJSON("/api/quote", { location: { lat: D.loc.lat, lon: D.loc.lon }, photos: D.photos }).then(function (res) {
-        if (!res.ok) { quoteFailed(res.data && res.data.message); return; }
+      postJSON("/api/quote", { location: { lat: D.loc.lat, lon: D.loc.lon }, photos: D.photos, coupon: B.coupon }).then(function (res) {
+        if (!res.ok) {
+          if (res.data && res.data.error === "invalid_coupon") { removeCoupon(); setNote("bkcouponmsg", "That code isn't valid.", "error"); return; }
+          quoteFailed(res.data && res.data.message); return;
+        }
         B.quote = res.data;
         renderQuote();
       }).catch(function () { quoteFailed(); });
@@ -1847,6 +1861,10 @@
       $("bk-calc").hidden = true;
       $("bk-rows").hidden = false;
       $("bk-slot").hidden = false;
+      $("bk-slot").textContent = q.total_cents === 0 ? "Nothing to charge for this booking." : "Card payment isn't connected yet.";
+      $("bkcouponform").hidden = false;
+      $("bkr-discrow").hidden = !(q.discount_cents > 0);
+      $("bkr-disc").textContent = "−" + money(q.discount_cents);
       $("bkr-dep").textContent = money(q.deposit_cents);
       $("bkr-mlabel").textContent = "Mileage (" + q.miles.toFixed(1) + " mi × " + money(q.per_mile_cents) + (q.approx ? ", approx." : "") + ")";
       $("bkr-mile").textContent = money(q.mileage_cents);
@@ -1858,6 +1876,37 @@
       $("bkpay").textContent = "Pay " + money(q.total_cents);
       $("bkpay").disabled = false;
     }
+    function removeCoupon() {
+      B.coupon = "";
+      $("bkcoupon").value = ""; $("bkcoupon").disabled = false;
+      $("bkcouponbtn").hidden = false; $("bkcouponrm").hidden = true;
+      setNote("bkcouponmsg", "");
+    }
+    $("bkcouponform").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (B.coupon || B.busy) return;
+      var code = $("bkcoupon").value.trim();
+      if (!code) return;
+      var btn = $("bkcouponbtn");
+      btn.disabled = true;
+      setNote("bkcouponmsg", "Checking...");
+      postJSON("/api/coupon", { code: code }).then(function (res) {
+        if (res.status === 429) { setNote("bkcouponmsg", res.data.message || "Too many attempts. Wait a minute and try again.", "error"); return; }
+        if (res.ok && res.data.valid) {
+          B.coupon = code;
+          $("bkcoupon").disabled = true; btn.hidden = true; $("bkcouponrm").hidden = false;
+          setNote("bkcouponmsg", res.data.label || "Coupon applied.", "good");
+          getQuote();
+        } else setNote("bkcouponmsg", "That code isn't valid.", "error");
+      }).catch(function () { setNote("bkcouponmsg", "Could not reach the server. Try again in a moment.", "error"); })
+        .finally(function () { btn.disabled = false; });
+    });
+    $("bkcouponrm").addEventListener("click", function () {
+      if (B.busy) return;
+      var had = B.coupon;
+      removeCoupon();
+      if (had) getQuote();
+    });
     $("bkrback").addEventListener("click", function () {
       $("bkreview").hidden = true; $("wiz").hidden = false;
       B.editing = false;
@@ -1872,7 +1921,7 @@
       postJSON("/api/booking", {
         name: D.name, contact: D.contact, date: D.date, player_name: D.pname, player_number: D.pnum,
         location: D.loc, attending: D.attending, is_sport: D.sport, sport: D.sportname,
-        entry_fee: D.fee, entry_fee_amount: D.feeamt, photos: D.photos
+        entry_fee: D.fee, entry_fee_amount: D.feeamt, photos: D.photos, coupon: B.coupon
       }).then(function (res) {
         if (res.ok && res.data.booked) { finish(res.data); return; }
         setNote("bkpaymsg", (res.data && res.data.message) || "Something went wrong. Try again in a moment.", "error");
@@ -1893,6 +1942,7 @@
     function reset() {
       D = { name: "", contact: "", date: "", pname: "", pnum: "", loc: null, attending: null, sport: null, sportname: "", fee: null, feeamt: "", photos: 4 };
       B.done = false; B.editing = false; B.quote = null;
+      removeCoupon();
       $("bkdone").hidden = true; $("bkreview").hidden = true; $("wiz").hidden = false;
       $("bk-locq").value = ""; $("bk-locres").textContent = ""; $("bk-locmsg").textContent = "";
       if (marker && map) { map.removeLayer(marker); marker = null; }
